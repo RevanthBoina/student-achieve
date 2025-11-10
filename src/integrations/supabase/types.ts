@@ -118,6 +118,7 @@ export type Database = {
           id: string
           id_card_url: string | null
           id_card_verified: boolean | null
+          is_public: boolean | null
           is_verified: boolean | null
           records_count: number | null
           school_email: string | null
@@ -137,6 +138,7 @@ export type Database = {
           id: string
           id_card_url?: string | null
           id_card_verified?: boolean | null
+          is_public?: boolean | null
           is_verified?: boolean | null
           records_count?: number | null
           school_email?: string | null
@@ -156,6 +158,7 @@ export type Database = {
           id?: string
           id_card_url?: string | null
           id_card_verified?: boolean | null
+          is_public?: boolean | null
           is_verified?: boolean | null
           records_count?: number | null
           school_email?: string | null
