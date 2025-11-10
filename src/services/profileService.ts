@@ -28,6 +28,7 @@ const PRIVATE_PROFILE_COLUMNS = `
   created_at,
   email,
   school_email,
+  school,
   education_info,
   school_email_verified,
   id_card_verified,

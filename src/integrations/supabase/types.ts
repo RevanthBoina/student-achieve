@@ -121,6 +121,7 @@ export type Database = {
           is_public: boolean | null
           is_verified: boolean | null
           records_count: number | null
+          school: string | null
           school_email: string | null
           school_email_verified: boolean | null
           updated_at: string | null
@@ -141,6 +142,7 @@ export type Database = {
           is_public?: boolean | null
           is_verified?: boolean | null
           records_count?: number | null
+          school?: string | null
           school_email?: string | null
           school_email_verified?: boolean | null
           updated_at?: string | null
@@ -161,6 +163,7 @@ export type Database = {
           is_public?: boolean | null
           is_verified?: boolean | null
           records_count?: number | null
+          school?: string | null
           school_email?: string | null
           school_email_verified?: boolean | null
           updated_at?: string | null

@@ -18,6 +18,7 @@ export interface PublicProfile {
 export interface PrivateProfile extends PublicProfile {
   email: string;
   school_email: string | null;
+  school: string | null;
   education_info: string | null;
   school_email_verified: boolean;
   id_card_verified: boolean;
