@@ -1,11 +1,26 @@
 import { z } from 'zod';
 
-// School domains for validation
-const SCHOOL_DOMAINS = ['edu', 'ac.uk', 'edu.au', 'edu.cn', 'ac.jp'];
+// School domains for validation - educational institutions worldwide
+const SCHOOL_DOMAINS = [
+  'edu',           // US educational institutions
+  'edu.in',        // Indian educational institutions
+  'ac.in',         // Indian academic institutions
+  'ac.uk',         // UK academic institutions
+  'edu.au',        // Australian educational institutions
+  'edu.cn',        // Chinese educational institutions
+  'ac.jp',         // Japanese academic institutions
+  'edu.pk',        // Pakistani educational institutions
+  'edu.sg',        // Singaporean educational institutions
+  'edu.my',        // Malaysian educational institutions
+  'ac.nz',         // New Zealand academic institutions
+];
 
 const isSchoolEmail = (email: string) => {
   const domain = email.split('@')[1];
-  return SCHOOL_DOMAINS.some(schoolDomain => domain?.endsWith(schoolDomain));
+  if (!domain) return false;
+  
+  // Check if domain ends with any known educational domain
+  return SCHOOL_DOMAINS.some(schoolDomain => domain.endsWith(schoolDomain));
 };
 
 // Signup Schema
