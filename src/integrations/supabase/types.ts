@@ -257,6 +257,7 @@ export type Database = {
           comments_count: number | null
           created_at: string | null
           description: string
+          engagement_score: number | null
           evidence_url: string | null
           id: string
           media_url: string | null
@@ -276,6 +277,7 @@ export type Database = {
           comments_count?: number | null
           created_at?: string | null
           description: string
+          engagement_score?: number | null
           evidence_url?: string | null
           id?: string
           media_url?: string | null
@@ -295,6 +297,7 @@ export type Database = {
           comments_count?: number | null
           created_at?: string | null
           description?: string
+          engagement_score?: number | null
           evidence_url?: string | null
           id?: string
           media_url?: string | null
@@ -388,6 +391,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_engagement_score: {
+        Args: { record_id: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
