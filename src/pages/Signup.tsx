@@ -46,11 +46,9 @@ export default function Signup() {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('id-cards')
-        .getPublicUrl(fileName);
-
-      return publicUrl;
+      // Store only the file path, not a public URL (id-cards bucket is private)
+      // Signed URLs will be generated on-demand when authorized users need access
+      return fileName;
     } catch (error) {
       console.error('ID card upload error:', error);
       return null;
