@@ -175,21 +175,21 @@ export type Database = {
           created_at: string | null
           id: string
           record_id: string
-          type: string
+          type: Database["public"]["Enums"]["reaction_type"]
           user_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
           record_id: string
-          type: string
+          type: Database["public"]["Enums"]["reaction_type"]
           user_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
           record_id?: string
-          type?: string
+          type?: Database["public"]["Enums"]["reaction_type"]
           user_id?: string
         }
         Relationships: [
@@ -405,6 +405,13 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "collaborator" | "admin"
+      reaction_type:
+        | "amazing"
+        | "funny"
+        | "respect"
+        | "inspiring"
+        | "risky"
+        | "unbelievable"
       record_status: "pending" | "verified" | "rejected" | "broken"
       verification_status: "pending" | "approved" | "rejected"
     }
@@ -535,6 +542,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "collaborator", "admin"],
+      reaction_type: [
+        "amazing",
+        "funny",
+        "respect",
+        "inspiring",
+        "risky",
+        "unbelievable",
+      ],
       record_status: ["pending", "verified", "rejected", "broken"],
       verification_status: ["pending", "approved", "rejected"],
     },
