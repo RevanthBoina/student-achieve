@@ -9,7 +9,9 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
-import CreateRecord from "./pages/CreateRecord";
+import CreateBreakRecord from "./pages/CreateBreakRecord";
+import PendingChallenges from "./pages/PendingChallenges";
+import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,8 +27,10 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/create-record" element={<ProtectedRoute><CreateRecord /></ProtectedRoute>} />
+            <Route path="/pending-challenges" element={<PendingChallenges />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/create-break" element={<ProtectedRoute><CreateBreakRecord /></ProtectedRoute>} />
+            <Route path="/profile/:userId" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

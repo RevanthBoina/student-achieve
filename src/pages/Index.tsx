@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { Navigation } from '@/components/Navigation';
 import { RecordFilters, FilterState } from '@/components/RecordFilters';
 import { RecordCard } from '@/components/RecordCard';
 import { useInfiniteRecords } from '@/hooks/useInfiniteRecords';
@@ -9,8 +7,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
 
 const Index = () => {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     categoryId: 'all',
@@ -51,45 +47,11 @@ const Index = () => {
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
-
   const allRecords = data?.pages.flatMap((page) => page.records) || [];
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b sticky top-0 z-20 bg-background">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Student Book of World Records</h1>
-          <div className="flex gap-2">
-            {user ? (
-              <>
-                <Button onClick={() => navigate('/create-record')} size="sm">
-                  Create Record
-                </Button>
-                <Button onClick={() => navigate('/profile')} variant="outline" size="sm">
-                  Profile
-                </Button>
-                <Button onClick={handleLogout} variant="ghost" size="sm">
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button onClick={() => navigate('/login')} size="sm">
-                  Login
-                </Button>
-                <Button onClick={() => navigate('/signup')} variant="outline" size="sm">
-                  Sign Up
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+      <Navigation />
 
       {/* Filters */}
       <RecordFilters onFilterChange={setFilters} />
@@ -108,11 +70,6 @@ const Index = () => {
             <p className="text-sm text-muted-foreground mt-2">
               Try adjusting your filters or be the first to create a record!
             </p>
-            {user && (
-              <Button onClick={() => navigate('/create-record')} className="mt-4">
-                Create First Record
-              </Button>
-            )}
           </div>
         ) : (
           <>

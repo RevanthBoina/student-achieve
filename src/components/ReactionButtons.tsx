@@ -127,7 +127,7 @@ export const ReactionButtons = ({ recordId }: ReactionButtonsProps) => {
           .insert({
             record_id: recordId,
             user_id: user.id,
-            type: type as Database['public']['Enums']['reaction_type'],
+            type: type,
           });
 
         if (error) {
