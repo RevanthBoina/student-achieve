@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
@@ -126,7 +127,7 @@ export const ReactionButtons = ({ recordId }: ReactionButtonsProps) => {
           .insert({
             record_id: recordId,
             user_id: user.id,
-            type,
+            type: type as Database['public']['Enums']['reaction_type'],
           });
 
         if (error) throw error;
