@@ -2,11 +2,13 @@ import { supabase } from "@/integrations/supabase/client";
 import type { PublicProfile, PrivateProfile } from "@/types/profile";
 
 // Column selections for different access levels
+// SECURITY: Limited columns to prevent exposure of sensitive data (email, school_email, id_card_url)
 const PUBLIC_PROFILE_COLUMNS = `
   id,
   full_name,
   avatar_url,
   bio,
+  school,
   is_verified,
   followers_count,
   following_count,

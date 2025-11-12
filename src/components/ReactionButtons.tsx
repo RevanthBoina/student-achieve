@@ -130,7 +130,19 @@ export const ReactionButtons = ({ recordId }: ReactionButtonsProps) => {
             type: type as Database['public']['Enums']['reaction_type'],
           });
 
-        if (error) throw error;
+        if (error) {
+          // Handle rate limit errors gracefully
+          if (error.message.includes('rate limit') || error.message.includes('limit reached')) {
+            toast({
+              title: 'Rate limit exceeded',
+              description: error.message,
+              variant: 'destructive',
+            });
+            setLoading(false);
+            return;
+          }
+          throw error;
+        }
         setUserReaction(type);
       }
     } catch (error: any) {

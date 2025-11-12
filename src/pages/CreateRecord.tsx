@@ -115,7 +115,14 @@ export default function CreateRecord() {
           status: 'pending',
         });
 
-      if (error) throw error;
+      if (error) {
+        // Handle rate limit errors gracefully
+        if (error.message.includes('rate limit') || error.message.includes('limit reached')) {
+          toast.error(error.message);
+          return;
+        }
+        throw error;
+      }
 
       toast.success('Record submitted successfully! It will be reviewed by our team.');
       navigate('/');
