@@ -175,21 +175,21 @@ export type Database = {
           created_at: string | null
           id: string
           record_id: string
-          type: string
+          type: Database["public"]["Enums"]["reaction_type"]
           user_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
           record_id: string
-          type: string
+          type: Database["public"]["Enums"]["reaction_type"]
           user_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
           record_id?: string
-          type?: string
+          type?: Database["public"]["Enums"]["reaction_type"]
           user_id?: string
         }
         Relationships: [
@@ -388,7 +388,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          broken_records_count: number | null
+          created_at: string | null
+          followers_count: number | null
+          following_count: number | null
+          full_name: string | null
+          id: string | null
+          is_verified: boolean | null
+          records_count: number | null
+          school: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          broken_records_count?: number | null
+          created_at?: string | null
+          followers_count?: number | null
+          following_count?: number | null
+          full_name?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          records_count?: number | null
+          school?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          broken_records_count?: number | null
+          created_at?: string | null
+          followers_count?: number | null
+          following_count?: number | null
+          full_name?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          records_count?: number | null
+          school?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_engagement_score: {
@@ -405,6 +446,13 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "collaborator" | "admin"
+      reaction_type:
+        | "amazing"
+        | "funny"
+        | "respect"
+        | "inspiring"
+        | "risky"
+        | "unbelievable"
       record_status: "pending" | "verified" | "rejected" | "broken"
       verification_status: "pending" | "approved" | "rejected"
     }
@@ -535,6 +583,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "collaborator", "admin"],
+      reaction_type: [
+        "amazing",
+        "funny",
+        "respect",
+        "inspiring",
+        "risky",
+        "unbelievable",
+      ],
       record_status: ["pending", "verified", "rejected", "broken"],
       verification_status: ["pending", "approved", "rejected"],
     },
