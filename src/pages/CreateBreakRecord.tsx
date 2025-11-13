@@ -8,16 +8,20 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Trophy, Upload } from "lucide-react";
+import { PlusCircle, Trophy, Upload, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { AIFeedback } from "@/components/AIFeedback";
 
 export default function CreateBreakRecord() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("create");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
 
   // Create New Record Form State
   const [createForm, setCreateForm] = useState({
@@ -38,23 +42,101 @@ export default function CreateBreakRecord() {
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     
-    try {
-      // TODO: Implement actual submission logic
-      toast({
-        title: "Record Created!",
-        description: "Your record has been submitted for verification.",
-      });
-      navigate("/");
-    } catch (error) {
+    if (!user) {
       toast({
         title: "Error",
-        description: "Failed to create record. Please try again.",
+        description: "You must be logged in to submit a record.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setAiAnalysis(null);
+    
+    try {
+      // Step 1: Run AI analysis
+      const analysisResponse = await supabase.functions.invoke('analyze-submission', {
+        body: {
+          title: createForm.title,
+          description: createForm.description,
+          googleDriveLink: createForm.proofUrl,
+          userId: user.id
+        }
+      });
+
+      if (analysisResponse.error) {
+        throw new Error(analysisResponse.error.message || 'AI analysis failed');
+      }
+
+      const analysis = analysisResponse.data;
+      setAiAnalysis(analysis);
+      setIsAnalyzing(false);
+
+      // If auto-reject, don't proceed with submission
+      if (analysis.recommendedAction === 'reject') {
+        toast({
+          title: "Submission Not Accepted",
+          description: "Please address the issues highlighted below and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Step 2: Submit record to database
+      setIsSubmitting(true);
+      
+      const { data: record, error: recordError } = await supabase
+        .from('records')
+        .insert({
+          user_id: user.id,
+          title: createForm.title,
+          description: createForm.description,
+          evidence_url: createForm.proofUrl,
+          category_id: createForm.category,
+          status: 'pending',
+          ai_fraud_score: analysis.fraudScore,
+          ai_flags: analysis.flags,
+          ai_reviewed: true
+        })
+        .select()
+        .single();
+
+      if (recordError) throw recordError;
+
+      // Step 3: Store AI moderation results
+      const { error: aiError } = await supabase
+        .from('ai_moderation_results')
+        .insert({
+          record_id: record.id,
+          fraud_score: analysis.fraudScore,
+          content_quality_score: analysis.contentQualityScore,
+          flags: analysis.flags,
+          recommended_action: analysis.recommendedAction,
+          analysis_details: analysis.details
+        });
+
+      if (aiError) console.error('Failed to store AI results:', aiError);
+
+      toast({
+        title: "Record Created!",
+        description: analysis.recommendedAction === 'review' 
+          ? "Your record has been flagged for detailed review."
+          : "Your record has been submitted for verification.",
+      });
+      
+      navigate("/");
+    } catch (error: any) {
+      console.error('Submission error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create record. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
+      setIsAnalyzing(false);
     }
   };
 
@@ -204,8 +286,25 @@ export default function CreateBreakRecord() {
                     </p>
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? "Submitting..." : "Submit New Record"}
+                  {aiAnalysis && (
+                    <div className="mb-6">
+                      <AIFeedback
+                        fraudScore={aiAnalysis.fraudScore}
+                        contentQualityScore={aiAnalysis.contentQualityScore}
+                        flags={aiAnalysis.flags}
+                        recommendedAction={aiAnalysis.recommendedAction}
+                        suggestions={aiAnalysis.suggestions}
+                      />
+                    </div>
+                  )}
+
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={isSubmitting || isAnalyzing}
+                  >
+                    {isAnalyzing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isAnalyzing ? "Analyzing submission..." : isSubmitting ? "Submitting..." : "Submit New Record"}
                   </Button>
                 </form>
               </CardContent>
