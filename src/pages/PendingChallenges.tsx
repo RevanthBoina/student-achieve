@@ -1,21 +1,47 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigation } from "@/components/Navigation";
+import { BackButton } from "@/components/BackButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Clock, Search, Bell, BellOff } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function PendingChallenges() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Real-time subscription for new break attempts
+  useEffect(() => {
+    const channel = supabase
+      .channel('record-breaks-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'record_breaks'
+        },
+        () => {
+          setRefreshKey(prev => prev + 1);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       
       <main className="container py-8">
+        <BackButton />
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Pending Break Attempts</h1>
           <p className="text-muted-foreground">

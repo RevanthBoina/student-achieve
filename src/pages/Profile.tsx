@@ -13,11 +13,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { getOwnProfile, updateProfilePrivacy } from '@/services/profileService';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { BackButton } from '@/components/BackButton';
 
 export default function Profile() {
   const { user, logout } = useAuth();
   const [isPublic, setIsPublic] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [pendingRecordsCount, setPendingRecordsCount] = useState(0);
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -29,6 +31,45 @@ export default function Profile() {
 
   useEffect(() => {
     loadProfile();
+    loadPendingRecordsCount();
+  }, [user]);
+
+  // Real-time subscription for admin notifications
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('admin-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'records',
+          filter: 'status=eq.pending'
+        },
+        () => {
+          loadPendingRecordsCount();
+          toast.info('New record awaiting verification');
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'record_breaks',
+          filter: 'status=eq.pending'
+        },
+        () => {
+          toast.info('New break attempt awaiting verification');
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const loadProfile = async () => {
@@ -43,6 +84,17 @@ export default function Profile() {
       setIsPublic(profile.is_public);
     }
     setLoading(false);
+  };
+
+  const loadPendingRecordsCount = async () => {
+    if (!user) return;
+
+    const { count } = await supabase
+      .from('records')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending');
+
+    setPendingRecordsCount(count || 0);
   };
 
   const uploadAvatar = async (file: File): Promise<string | null> => {
@@ -123,7 +175,8 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="container max-w-2xl mx-auto py-8">
-        <div className="flex justify-between items-center mb-6">
+        <BackButton />
+        <div className="flex justify-between items-center mb-6 mt-4">
           <div>
             <h1 className="text-3xl font-bold">Profile Settings</h1>
             <p className="text-muted-foreground">{user?.email}</p>
