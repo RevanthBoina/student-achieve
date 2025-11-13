@@ -7,11 +7,12 @@
     /* Modern Minimalist Design System - Student Book of World Records */
     
     /* Primary: Trust Blue - Professional & Trustworthy */
-    --background: 0 0% 100%;
+    /* Changed background family to blue tones for the whole project */
+    --background: 212 92% 96%; /* very light blue */
     --foreground: 220 15% 20%;
-    --card: 0 0% 100%;
+    --card: 212 92% 98%; /* slightly lighter card */
     --card-foreground: 220 15% 20%;
-    --popover: 0 0% 100%;
+    --popover: 212 92% 98%;
     --popover-foreground: 220 15% 20%;
     
     /* Primary Brand: Deep Blue */
@@ -67,7 +68,7 @@
     --radius: 0.75rem;
     
     /* Sidebar */
-    --sidebar-background: 0 0% 100%;
+    --sidebar-background: 212 92% 96%;
     --sidebar-foreground: 220 15% 20%;
     --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -78,11 +79,12 @@
   }
 
   .dark {
-    --background: 220 15% 10%;
+    /* Dark mode uses deeper blue backgrounds for contrast */
+    --background: 212 34% 10%; /* deep blue */
     --foreground: 0 0% 98%;
-    --card: 220 15% 12%;
+    --card: 212 34% 12%;
     --card-foreground: 0 0% 98%;
-    --popover: 220 15% 12%;
+    --popover: 212 34% 12%;
     --popover-foreground: 0 0% 98%;
     
     --primary: 217 91% 65%;
@@ -122,7 +124,7 @@
     --shadow-primary: 0 10px 30px -10px hsl(217 91% 65% / 0.4);
     --shadow-accent: 0 10px 30px -10px hsl(25 95% 58% / 0.4);
     
-    --sidebar-background: 220 15% 10%;
+    --sidebar-background: 212 34% 10%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 217 91% 65%;
     --sidebar-primary-foreground: 220 15% 10%;
