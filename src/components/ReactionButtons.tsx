@@ -124,11 +124,11 @@ export const ReactionButtons = ({ recordId }: ReactionButtonsProps) => {
         // Add new reaction
         const { error } = await supabase
           .from('reactions')
-          .insert({
+          .insert([{
             record_id: recordId,
             user_id: user.id,
-            type: type,
-          });
+            type: type as any,
+          }]);
 
         if (error) {
           // Handle rate limit errors gracefully

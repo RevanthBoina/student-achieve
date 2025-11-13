@@ -90,6 +90,8 @@ export default function CreateBreakRecord() {
       <Navigation />
       
       <main className="container py-8 max-w-4xl">
+        <BackButton />
+        <BackButton />
         <BackButton to="/" />
         
         <div className="mb-8">

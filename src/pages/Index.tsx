@@ -5,6 +5,7 @@ import { RecordCard } from '@/components/RecordCard';
 import { useInfiniteRecords } from '@/hooks/useInfiniteRecords';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   const [filters, setFilters] = useState<FilterState>({
@@ -20,9 +21,44 @@ const Index = () => {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
+    refetch,
   } = useInfiniteRecords(filters);
 
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Real-time subscription for new and updated records
+  useEffect(() => {
+    const channel = supabase
+      .channel('records-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'records',
+          filter: 'status=eq.verified'
+        },
+        () => {
+          refetch();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'records'
+        },
+        () => {
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
 
   // Infinite scroll observer
   useEffect(() => {

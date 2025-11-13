@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Navigation } from "@/components/Navigation";
+import { BackButton } from "@/components/BackButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -73,6 +74,7 @@ export default function Leaderboard() {
       <Navigation />
       
       <main className="container py-8 max-w-4xl">
+        <BackButton />
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Leaderboard</h1>
           <p className="text-muted-foreground">
