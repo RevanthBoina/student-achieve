@@ -16,22 +16,23 @@ export function Navigation() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-6">
+    <nav className="sticky top-0 z-50 w-full bg-background border-b border-border shadow-sm">
+      <div className="container flex h-16 items-center justify-between px-4">
+        <div className="flex items-center gap-8">
           <NavLink 
             to="/" 
-            className="text-xl font-bold text-primary hover:text-primary-light transition-colors"
+            className="flex items-center gap-2 text-xl font-bold font-poppins text-primary hover:text-primary-light transition-colors"
           >
-            Student Records
+            <Trophy className="h-7 w-7 text-gold" />
+            <span className="hidden sm:inline">SBWR</span>
           </NavLink>
           
           <div className="hidden md:flex items-center gap-1">
             <NavLink
               to="/"
               end
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground rounded-md hover:bg-secondary hover:text-foreground transition-colors"
-              activeClassName="bg-secondary text-foreground"
+              className="relative flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground rounded-md hover:text-foreground transition-colors"
+              activeClassName="text-foreground after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-gold"
             >
               <Home className="h-4 w-4" />
               Home
@@ -39,17 +40,17 @@ export function Navigation() {
             
             <NavLink
               to="/pending-challenges"
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground rounded-md hover:bg-secondary hover:text-foreground transition-colors"
-              activeClassName="bg-secondary text-foreground"
+              className="relative flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground rounded-md hover:text-foreground transition-colors"
+              activeClassName="text-foreground after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-gold"
             >
               <Clock className="h-4 w-4" />
-              Pending Challenges
+              Pending
             </NavLink>
             
             <NavLink
               to="/leaderboard"
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground rounded-md hover:bg-secondary hover:text-foreground transition-colors"
-              activeClassName="bg-secondary text-foreground"
+              className="relative flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground rounded-md hover:text-foreground transition-colors"
+              activeClassName="text-foreground after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-gold"
             >
               <Trophy className="h-4 w-4" />
               Leaderboard
@@ -57,24 +58,24 @@ export function Navigation() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {user ? (
             <>
               <NavLink to="/create-break">
-                <Button variant="default" size="sm" className="gap-2">
+                <Button variant="gold" size="sm" className="gap-2">
                   <PlusCircle className="h-4 w-4" />
-                  <span className="hidden sm:inline">Create/Break</span>
+                  <span className="hidden sm:inline">Submit Record</span>
                 </Button>
               </NavLink>
               
               <NavLink to={`/profile/${user.id}`}>
-                <Button variant="ghost" size="sm" className="gap-2">
+                <Button variant="ghost" size="sm" className="gap-2 hover:text-gold">
                   <User className="h-4 w-4" />
                   <span className="hidden sm:inline">Profile</span>
                 </Button>
               </NavLink>
               
-              <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2 hover:text-gold">
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:inline">Logout</span>
               </Button>
@@ -87,7 +88,7 @@ export function Navigation() {
                 </Button>
               </NavLink>
               <NavLink to="/signup">
-                <Button variant="default" size="sm">
+                <Button variant="gold" size="sm">
                   Sign Up
                 </Button>
               </NavLink>

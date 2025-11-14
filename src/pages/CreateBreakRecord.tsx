@@ -107,7 +107,7 @@ export default function CreateBreakRecord() {
 
       // Step 3: Store AI moderation results
       const { error: aiError } = await supabase
-        .from('ai_moderation_results')
+        .from('ai_moderation_results' as any)
         .insert({
           record_id: record.id,
           fraud_score: analysis.fraudScore,
