@@ -29,7 +29,7 @@ export function AdminAIInsights() {
   const fetchAIInsights = async () => {
     try {
       const { data, error } = await supabase
-        .from('ai_moderation_results')
+        .from('ai_moderation_results' as any)
         .select(`
           id,
           record_id,

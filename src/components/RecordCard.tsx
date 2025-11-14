@@ -44,37 +44,43 @@ export const RecordCard = ({ record }: RecordCardProps) => {
     : record.description;
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+    <Card className="group overflow-hidden shadow-card hover-lift border border-border/50">
       {/* Header */}
-      <div className="p-4 flex items-center gap-3">
-        <Avatar className="h-10 w-10">
+      <div className="p-6 flex items-center gap-3">
+        <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm">
           <AvatarImage src={record.profile.avatar_url} alt={record.profile.full_name} />
-          <AvatarFallback>{record.profile.full_name[0]}</AvatarFallback>
+          <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+            {record.profile.full_name[0]}
+          </AvatarFallback>
         </Avatar>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-semibold">{record.profile.full_name}</span>
+            <span className="font-semibold text-foreground">{record.profile.full_name}</span>
             {record.profile.is_verified && (
-              <BadgeCheck className="h-4 w-4 text-primary" />
+              <BadgeCheck className="h-4 w-4 text-gold" />
             )}
           </div>
           <p className="text-sm text-muted-foreground">
             Posted {formatDistanceToNow(new Date(record.created_at), { addSuffix: true })}
           </p>
         </div>
-        <Badge variant="secondary">{record.category.name}</Badge>
+        <Badge className="bg-gold/10 text-gold-foreground border border-gold/20 text-xs uppercase font-semibold">
+          {record.category.name}
+        </Badge>
       </div>
 
       {/* Content */}
-      <div className="px-4 pb-4">
-        <h3 className="text-xl font-bold mb-2">{record.title}</h3>
-        <p className="text-foreground/90 whitespace-pre-wrap">
+      <div className="px-6 pb-4">
+        <h3 className="text-xl font-bold font-poppins mb-3 group-hover:text-primary transition-colors">
+          {record.title}
+        </h3>
+        <p className="text-foreground/80 whitespace-pre-wrap leading-relaxed">
           {isExpanded ? record.description : truncatedDescription}
         </p>
         {record.description.length > 200 && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-primary text-sm font-medium mt-1 hover:underline"
+            className="text-gold text-sm font-medium mt-2 hover:text-gold-dark transition-colors"
           >
             {isExpanded ? 'Read less' : 'Read more'}
           </button>
@@ -115,32 +121,34 @@ export const RecordCard = ({ record }: RecordCardProps) => {
         </div>
       )}
 
-      {/* Reactions */}
-      <div className="px-4 pb-4">
-        <ReactionButtons recordId={record.id} />
-      </div>
+      {/* Reaction & Share Buttons */}
+      <div className="px-6 pb-6">
+        <div className="flex items-center justify-between border-t border-border/50 pt-4">
+          <div className="flex items-center gap-3">
+            <ReactionButtons recordId={record.id} />
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowComments(!showComments)}
+              className="gap-2 hover:text-gold transition-colors"
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span className="text-sm font-medium">{record.comments_count}</span>
+            </Button>
 
-      {/* Action Bar */}
-      <div className="border-t border-border px-4 py-3 flex items-center justify-between">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowComments(!showComments)}
-          className="gap-2"
-        >
-          <MessageCircle className="h-4 w-4" />
-          {record.comments_count} {record.comments_count === 1 ? 'Comment' : 'Comments'}
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowShareDialog(true)}
+              className="gap-2 hover:text-gold transition-colors"
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <Button size="sm" variant="gold" className="gap-2">
             Break Record
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowShareDialog(true)}
-          >
-            <Share2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
