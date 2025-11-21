@@ -42,16 +42,18 @@ const PRIVATE_PROFILE_COLUMNS = `
 /**
  * Get public profile data (safe for anyone to view)
  */
-export async function getPublicProfile(userId: string): Promise<PublicProfile | null> {
+export async function getPublicProfile(
+  userId: string,
+): Promise<PublicProfile | null> {
   const { data, error } = await supabase
-    .from('profiles')
+    .from("profiles")
     .select(PUBLIC_PROFILE_COLUMNS)
-    .eq('id', userId)
-    .eq('is_public', true)
+    .eq("id", userId)
+    .eq("is_public", true)
     .single();
 
   if (error) {
-    console.error('Error fetching public profile:', error);
+    console.error("Error fetching public profile:", error);
     return null;
   }
 
@@ -62,18 +64,20 @@ export async function getPublicProfile(userId: string): Promise<PublicProfile | 
  * Get own complete profile (includes sensitive data)
  */
 export async function getOwnProfile(): Promise<PrivateProfile | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (!user) return null;
 
   const { data, error } = await supabase
-    .from('profiles')
+    .from("profiles")
     .select(PRIVATE_PROFILE_COLUMNS)
-    .eq('id', user.id)
+    .eq("id", user.id)
     .single();
 
   if (error) {
-    console.error('Error fetching own profile:', error);
+    console.error("Error fetching own profile:", error);
     return null;
   }
 
@@ -83,18 +87,22 @@ export async function getOwnProfile(): Promise<PrivateProfile | null> {
 /**
  * Update profile privacy setting
  */
-export async function updateProfilePrivacy(isPublic: boolean): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
-  
+export async function updateProfilePrivacy(
+  isPublic: boolean,
+): Promise<boolean> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (!user) return false;
 
   const { error } = await supabase
-    .from('profiles')
+    .from("profiles")
     .update({ is_public: isPublic })
-    .eq('id', user.id);
+    .eq("id", user.id);
 
   if (error) {
-    console.error('Error updating profile privacy:', error);
+    console.error("Error updating profile privacy:", error);
     return false;
   }
 
@@ -104,16 +112,18 @@ export async function updateProfilePrivacy(isPublic: boolean): Promise<boolean> 
 /**
  * Search public profiles (returns only public fields)
  */
-export async function searchPublicProfiles(query: string): Promise<PublicProfile[]> {
+export async function searchPublicProfiles(
+  query: string,
+): Promise<PublicProfile[]> {
   const { data, error } = await supabase
-    .from('profiles')
+    .from("profiles")
     .select(PUBLIC_PROFILE_COLUMNS)
-    .eq('is_public', true)
+    .eq("is_public", true)
     .or(`full_name.ilike.%${query}%,bio.ilike.%${query}%`)
     .limit(20);
 
   if (error) {
-    console.error('Error searching profiles:', error);
+    console.error("Error searching profiles:", error);
     return [];
   }
 

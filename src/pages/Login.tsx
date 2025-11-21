@@ -1,15 +1,30 @@
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { loginSchema, LoginFormData } from '@/schemas/validation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { toast } from 'sonner';
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import GoogleLoginButton from "@/components/GoogleLoginButton";
+import { loginSchema, LoginFormData } from "@/schemas/validation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 
 export default function Login() {
   const { login, signInWithGoogle, user } = useAuth();
@@ -18,36 +33,36 @@ export default function Login() {
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
     },
   });
 
   useEffect(() => {
     if (user) {
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
     }
   }, [user, navigate]);
 
   const onSubmit = async (data: LoginFormData) => {
     const { error } = await login(data.email, data.password);
-    
+
     if (error) {
-      if (error.message.includes('Invalid login credentials')) {
-        toast.error('Invalid email or password');
+      if (error.message.includes("Invalid login credentials")) {
+        toast.error("Invalid email or password");
       } else {
         toast.error(error.message);
       }
       return;
     }
 
-    toast.success('Welcome back!');
-    navigate('/', { replace: true });
+    toast.success("Welcome back!");
+    navigate("/", { replace: true });
   };
 
   const handleGoogleSignIn = async () => {
     const { error } = await signInWithGoogle();
-    
+
     if (error) {
       toast.error(error.message);
     }
@@ -106,9 +121,9 @@ export default function Login() {
                 className="w-full"
                 disabled={form.formState.isSubmitting}
               >
-                {form.formState.isSubmitting ? 'Signing in...' : 'Sign In'}
+                {form.formState.isSubmitting ? "Signing in..." : "Sign In"}
               </Button>
-              
+
               <div className="relative w-full">
                 <Separator className="my-4" />
                 <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
@@ -144,8 +159,11 @@ export default function Login() {
               </Button>
 
               <p className="text-sm text-muted-foreground text-center">
-                Don't have an account?{' '}
-                <Link to="/signup" className="text-primary hover:underline font-medium">
+                Don't have an account?{" "}
+                <Link
+                  to="/signup"
+                  className="text-primary hover:underline font-medium"
+                >
                   Sign up
                 </Link>
               </p>

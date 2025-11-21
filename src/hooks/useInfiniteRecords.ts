@@ -1,6 +1,6 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { FilterState } from '@/components/RecordFilters';
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { FilterState } from "@/components/RecordFilters";
 
 const RECORDS_PER_PAGE = 20;
 
@@ -32,10 +32,10 @@ interface Record {
 
 export const useInfiniteRecords = (filters: FilterState) => {
   return useInfiniteQuery({
-    queryKey: ['records', filters],
+    queryKey: ["records", filters],
     queryFn: async ({ pageParam = 0 }) => {
       let query = supabase
-        .from('records')
+        .from("records")
         .select(
           `
           id,
@@ -62,39 +62,39 @@ export const useInfiniteRecords = (filters: FilterState) => {
           ),
           broken_at
         `,
-          { count: 'exact' }
+          { count: "exact" },
         )
-        .eq('status', 'verified');
+        .eq("status", "verified");
 
       // Apply filters
       if (filters.search) {
         query = query.or(
-          `title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`
+          `title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`,
         );
       }
 
-      if (filters.categoryId !== 'all') {
-        query = query.eq('category_id', filters.categoryId);
+      if (filters.categoryId !== "all") {
+        query = query.eq("category_id", filters.categoryId);
       }
 
-      if (filters.dateRange !== 'all') {
-        const daysAgo = filters.dateRange === '7days' ? 7 : 30;
+      if (filters.dateRange !== "all") {
+        const daysAgo = filters.dateRange === "7days" ? 7 : 30;
         const date = new Date();
         date.setDate(date.getDate() - daysAgo);
-        query = query.gte('created_at', date.toISOString());
+        query = query.gte("created_at", date.toISOString());
       }
 
       // Apply sorting
       switch (filters.sortBy) {
-        case 'popular':
-          query = query.order('reactions_count', { ascending: false });
+        case "popular":
+          query = query.order("reactions_count", { ascending: false });
           break;
-        case 'trending':
-          query = query.order('engagement_score', { ascending: false });
+        case "trending":
+          query = query.order("engagement_score", { ascending: false });
           break;
-        case 'newest':
+        case "newest":
         default:
-          query = query.order('created_at', { ascending: false });
+          query = query.order("created_at", { ascending: false });
           break;
       }
 
@@ -109,7 +109,8 @@ export const useInfiniteRecords = (filters: FilterState) => {
 
       return {
         records: (data as unknown as Record[]) || [],
-        nextPage: data && data.length === RECORDS_PER_PAGE ? pageParam + 1 : undefined,
+        nextPage:
+          data && data.length === RECORDS_PER_PAGE ? pageParam + 1 : undefined,
         totalCount: count || 0,
       };
     },

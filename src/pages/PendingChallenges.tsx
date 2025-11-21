@@ -1,11 +1,23 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/Navigation";
 import { BackButton } from "@/components/BackButton";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Clock, Search, Bell, BellOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,17 +29,17 @@ export default function PendingChallenges() {
   // Real-time subscription for new break attempts
   useEffect(() => {
     const channel = supabase
-      .channel('record-breaks-changes')
+      .channel("record-breaks-changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'record_breaks'
+          event: "*",
+          schema: "public",
+          table: "record_breaks",
         },
         () => {
-          setRefreshKey(prev => prev + 1);
-        }
+          setRefreshKey((prev) => prev + 1);
+        },
       )
       .subscribe();
 
@@ -39,7 +51,7 @@ export default function PendingChallenges() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <main className="container py-8">
         <BackButton />
         <div className="mb-8">
@@ -88,8 +100,7 @@ export default function PendingChallenges() {
                   </CardDescription>
                 </div>
                 <Badge variant="outline" className="gap-1">
-                  <Clock className="h-3 w-3" />
-                  3 attempts
+                  <Clock className="h-3 w-3" />3 attempts
                 </Badge>
               </div>
             </CardHeader>

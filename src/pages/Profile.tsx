@@ -1,19 +1,33 @@
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuth } from '@/contexts/AuthContext';
-import { profileSchema, ProfileFormData } from '@/schemas/validation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { getOwnProfile, updateProfilePrivacy } from '@/services/profileService';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { BackButton } from '@/components/BackButton';
+import { useEffect, useState, useCallback } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@/contexts/AuthContext";
+import { profileSchema, ProfileFormData } from "@/schemas/validation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { getOwnProfile, updateProfilePrivacy } from "@/services/profileService";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { BackButton } from "@/components/BackButton";
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -24,46 +38,71 @@ export default function Profile() {
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      bio: '',
-      school: '',
+      bio: "",
+      school: "",
     },
   });
+
+  const loadProfile = useCallback(async () => {
+    if (!user) return;
+
+    const profile = await getOwnProfile();
+    if (profile) {
+      form.reset({
+        bio: profile.bio || "",
+        school: profile.school || "",
+      });
+      setIsPublic(profile.is_public);
+    }
+    setLoading(false);
+  }, [user, form]);
+
+  const loadPendingRecordsCount = useCallback(async () => {
+    if (!user) return;
+
+    const { count } = await supabase
+      .from("records")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending");
+
+    setPendingRecordsCount(count || 0);
+  }, [user]);
 
   useEffect(() => {
     loadProfile();
     loadPendingRecordsCount();
-  }, [user]);
+  }, [user, loadProfile, loadPendingRecordsCount]);
 
   // Real-time subscription for admin notifications
   useEffect(() => {
     if (!user) return;
 
     const channel = supabase
-      .channel('admin-notifications')
+      .channel("admin-notifications")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'records',
-          filter: 'status=eq.pending'
+          event: "INSERT",
+          schema: "public",
+          table: "records",
+          filter: "status=eq.pending",
         },
         () => {
           loadPendingRecordsCount();
-          toast.info('New record awaiting verification');
-        }
+          toast.info("New record awaiting verification");
+        },
       )
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'record_breaks',
-          filter: 'status=eq.pending'
+          event: "INSERT",
+          schema: "public",
+          table: "record_breaks",
+          filter: "status=eq.pending",
         },
         () => {
-          toast.info('New break attempt awaiting verification');
-        }
+          toast.info("New break attempt awaiting verification");
+        },
       )
       .subscribe();
 
@@ -71,52 +110,28 @@ export default function Profile() {
       supabase.removeChannel(channel);
     };
   }, [user]);
-
-  const loadProfile = async () => {
-    if (!user) return;
-    
-    const profile = await getOwnProfile();
-    if (profile) {
-      form.reset({
-        bio: profile.bio || '',
-        school: profile.school || '',
-      });
-      setIsPublic(profile.is_public);
-    }
-    setLoading(false);
-  };
-
-  const loadPendingRecordsCount = async () => {
-    if (!user) return;
-
-    const { count } = await supabase
-      .from('records')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'pending');
-
-    setPendingRecordsCount(count || 0);
-  };
+  
 
   const uploadAvatar = async (file: File): Promise<string | null> => {
     if (!user) return null;
-    
+
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const fileName = `${user.id}/avatar.${fileExt}`;
-      
+
       const { error: uploadError } = await supabase.storage
-        .from('avatars')
+        .from("avatars")
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("avatars").getPublicUrl(fileName);
 
       return publicUrl;
     } catch (error) {
-      console.error('Avatar upload error:', error);
+      console.error("Avatar upload error:", error);
       return null;
     }
   };
@@ -125,12 +140,13 @@ export default function Profile() {
     if (!user) return;
 
     try {
+
       let avatarUrl = null;
       if (data.profilePhoto) {
         avatarUrl = await uploadAvatar(data.profilePhoto);
       }
 
-      const updates: any = {
+      const updates: Record<string, unknown> = {
         bio: data.bio,
         school: data.school,
       };
@@ -140,17 +156,17 @@ export default function Profile() {
       }
 
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update(updates)
-        .eq('id', user.id);
+        .eq("id", user.id);
 
       if (error) throw error;
 
-      toast.success('Profile updated successfully!');
+      toast.success("Profile updated successfully!");
       await loadProfile();
     } catch (error) {
-      console.error('Profile update error:', error);
-      toast.error('Failed to update profile');
+      console.error("Profile update error:", error);
+      toast.error("Failed to update profile");
     }
   };
 
@@ -158,9 +174,9 @@ export default function Profile() {
     const success = await updateProfilePrivacy(checked);
     if (success) {
       setIsPublic(checked);
-      toast.success(`Profile is now ${checked ? 'public' : 'private'}`);
+      toast.success(`Profile is now ${checked ? "public" : "private"}`);
     } else {
-      toast.error('Failed to update privacy settings');
+      toast.error("Failed to update privacy settings");
     }
   };
 
@@ -219,7 +235,10 @@ export default function Profile() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
                 <FormField
                   control={form.control}
                   name="profilePhoto"
@@ -282,7 +301,7 @@ export default function Profile() {
                   disabled={form.formState.isSubmitting}
                   className="w-full"
                 >
-                  {form.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
+                  {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
                 </Button>
               </form>
             </Form>

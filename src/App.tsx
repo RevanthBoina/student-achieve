@@ -13,6 +13,7 @@ import CreateBreakRecord from "./pages/CreateBreakRecord";
 import PendingChallenges from "./pages/PendingChallenges";
 import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
+import AuthCallback from "./pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -26,11 +27,26 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/pending-challenges" element={<PendingChallenges />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/create-break" element={<ProtectedRoute><CreateBreakRecord /></ProtectedRoute>} />
-            <Route path="/profile/:userId" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route
+              path="/create-break"
+              element={
+                <ProtectedRoute>
+                  <CreateBreakRecord />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile/:userId"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

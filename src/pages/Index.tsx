@@ -1,21 +1,21 @@
-import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { Navigation } from '@/components/Navigation';
-import { RecordFilters, FilterState } from '@/components/RecordFilters';
-import { RecordCard } from '@/components/RecordCard';
-import { Footer } from '@/components/Footer';
-import { useInfiniteRecords } from '@/hooks/useInfiniteRecords';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { Loader2, Trophy } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+import { Navigation } from "@/components/Navigation";
+import { RecordFilters, FilterState } from "@/components/RecordFilters";
+import { RecordCard } from "@/components/RecordCard";
+import { Footer } from "@/components/Footer";
+import { useInfiniteRecords } from "@/hooks/useInfiniteRecords";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Loader2, Trophy } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [filters, setFilters] = useState<FilterState>({
-    search: '',
-    categoryId: 'all',
-    dateRange: 'all',
-    sortBy: 'newest',
+    search: "",
+    categoryId: "all",
+    dateRange: "all",
+    sortBy: "newest",
   });
 
   const {
@@ -32,29 +32,29 @@ const Index = () => {
   // Real-time subscription for new and updated records
   useEffect(() => {
     const channel = supabase
-      .channel('records-changes')
+      .channel("records-changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'records',
-          filter: 'status=eq.verified'
+          event: "INSERT",
+          schema: "public",
+          table: "records",
+          filter: "status=eq.verified",
         },
         () => {
           refetch();
-        }
+        },
       )
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'records'
+          event: "UPDATE",
+          schema: "public",
+          table: "records",
         },
         () => {
           refetch();
-        }
+        },
       )
       .subscribe();
 
@@ -71,7 +71,7 @@ const Index = () => {
           fetchNextPage();
         }
       },
-      { threshold: 0.8 }
+      { threshold: 0.8 },
     );
 
     const currentTarget = observerTarget.current;
@@ -117,19 +117,33 @@ const Index = () => {
       <section className="bg-secondary/30 border-y border-border">
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-3 gap-8 text-center">
-            <div className="animate-slide-up" style={{ animationDelay: '0ms' }}>
+            <div className="animate-slide-up" style={{ animationDelay: "0ms" }}>
               <div className="text-3xl md:text-4xl font-bold text-gold font-poppins">
-                {allRecords.length > 0 ? allRecords.length : '12,459'}
+                {allRecords.length > 0 ? allRecords.length : "12,459"}
               </div>
-              <div className="text-sm text-muted-foreground mt-1">Total Records</div>
+              <div className="text-sm text-muted-foreground mt-1">
+                Total Records
+              </div>
             </div>
-            <div className="animate-slide-up" style={{ animationDelay: '100ms' }}>
-              <div className="text-3xl md:text-4xl font-bold text-gold font-poppins">8,234</div>
+            <div
+              className="animate-slide-up"
+              style={{ animationDelay: "100ms" }}
+            >
+              <div className="text-3xl md:text-4xl font-bold text-gold font-poppins">
+                8,234
+              </div>
               <div className="text-sm text-muted-foreground mt-1">Students</div>
             </div>
-            <div className="animate-slide-up" style={{ animationDelay: '200ms' }}>
-              <div className="text-3xl md:text-4xl font-bold text-gold font-poppins">156</div>
-              <div className="text-sm text-muted-foreground mt-1">Countries</div>
+            <div
+              className="animate-slide-up"
+              style={{ animationDelay: "200ms" }}
+            >
+              <div className="text-3xl md:text-4xl font-bold text-gold font-poppins">
+                156
+              </div>
+              <div className="text-sm text-muted-foreground mt-1">
+                Countries
+              </div>
             </div>
           </div>
         </div>
@@ -149,7 +163,9 @@ const Index = () => {
         ) : allRecords.length === 0 ? (
           <div className="text-center py-20">
             <Trophy className="h-16 w-16 text-muted-foreground/40 mx-auto mb-4" />
-            <p className="text-muted-foreground text-xl font-medium">No records found</p>
+            <p className="text-muted-foreground text-xl font-medium">
+              No records found
+            </p>
             <p className="text-sm text-muted-foreground mt-2">
               Try adjusting your filters or be the first to create a record!
             </p>

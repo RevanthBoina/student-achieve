@@ -1,47 +1,67 @@
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { signupSchema, SignupFormData } from '@/schemas/validation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { signupSchema, SignupFormData } from "@/schemas/validation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Signup() {
   const { signup, signInWithGoogle, user } = useAuth();
   const navigate = useNavigate();
-  const [verificationMethod, setVerificationMethod] = useState<'school_email' | 'id_card'>('school_email');
+  const [verificationMethod, setVerificationMethod] = useState<
+    "school_email" | "id_card"
+  >("school_email");
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
-      fullName: '',
-      email: '',
-      password: '',
-      verificationMethod: 'school_email',
+      fullName: "",
+      email: "",
+      password: "",
+      verificationMethod: "school_email",
     },
   });
 
   useEffect(() => {
     if (user) {
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
     }
   }, [user, navigate]);
 
-  const uploadIdCard = async (file: File, userId: string): Promise<string | null> => {
+  const uploadIdCard = async (
+    file: File,
+    userId: string,
+  ): Promise<string | null> => {
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const fileName = `${userId}/id-card.${fileExt}`;
-      
+
       const { error: uploadError } = await supabase.storage
-        .from('id-cards')
+        .from("id-cards")
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
@@ -50,17 +70,17 @@ export default function Signup() {
       // Signed URLs will be generated on-demand when authorized users need access
       return fileName;
     } catch (error) {
-      console.error('ID card upload error:', error);
+      console.error("ID card upload error:", error);
       return null;
     }
   };
 
   const onSubmit = async (data: SignupFormData) => {
     const { error } = await signup(data.email, data.password, data.fullName);
-    
+
     if (error) {
-      if (error.message.includes('already registered')) {
-        toast.error('This email is already registered. Please login instead.');
+      if (error.message.includes("already registered")) {
+        toast.error("This email is already registered. Please login instead.");
       } else {
         toast.error(error.message);
       }
@@ -68,31 +88,43 @@ export default function Signup() {
     }
 
     // If ID card verification, upload the file
-    if (data.verificationMethod === 'id_card' && data.idCard) {
-      const { data: { user: newUser } } = await supabase.auth.getUser();
+    if (data.verificationMethod === "id_card" && data.idCard) {
+      const {
+        data: { user: newUser },
+      } = await supabase.auth.getUser();
       if (newUser) {
         const idCardUrl = await uploadIdCard(data.idCard, newUser.id);
         if (idCardUrl) {
-          await supabase.from('profiles').update({ id_card_url: idCardUrl }).eq('id', newUser.id);
+          await supabase
+            .from("profiles")
+            .update({ id_card_url: idCardUrl })
+            .eq("id", newUser.id);
         }
       }
     }
 
     // If school email verification, store it
-    if (data.verificationMethod === 'school_email' && data.schoolEmail) {
-      const { data: { user: newUser } } = await supabase.auth.getUser();
+    if (data.verificationMethod === "school_email" && data.schoolEmail) {
+      const {
+        data: { user: newUser },
+      } = await supabase.auth.getUser();
       if (newUser) {
-        await supabase.from('profiles').update({ school_email: data.schoolEmail }).eq('id', newUser.id);
+        await supabase
+          .from("profiles")
+          .update({ school_email: data.schoolEmail })
+          .eq("id", newUser.id);
       }
     }
 
-    toast.success('Account created successfully! Please check your email to verify your account.');
-    navigate('/login', { replace: true });
+    toast.success(
+      "Account created successfully! Please check your email to verify your account.",
+    );
+    navigate("/login", { replace: true });
   };
 
   const handleGoogleSignIn = async () => {
     const { error } = await signInWithGoogle();
-    
+
     if (error) {
       toast.error(error.message);
     }
@@ -123,7 +155,7 @@ export default function Signup() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="email"
@@ -131,7 +163,11 @@ export default function Signup() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="you@example.com" {...field} />
+                      <Input
+                        type="email"
+                        placeholder="you@example.com"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -145,10 +181,15 @@ export default function Signup() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Create a strong password" {...field} />
+                      <Input
+                        type="password"
+                        placeholder="Create a strong password"
+                        {...field}
+                      />
                     </FormControl>
                     <FormDescription className="text-xs">
-                      At least 8 characters with uppercase, lowercase, and numbers
+                      At least 8 characters with uppercase, lowercase, and
+                      numbers
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -165,20 +206,31 @@ export default function Signup() {
                       <RadioGroup
                         onValueChange={(value) => {
                           field.onChange(value);
-                          setVerificationMethod(value as 'school_email' | 'id_card');
+                          setVerificationMethod(
+                            value as "school_email" | "id_card",
+                          );
                         }}
                         defaultValue={field.value}
                         className="space-y-2"
                       >
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="school_email" id="school_email" />
-                          <Label htmlFor="school_email" className="font-normal cursor-pointer">
+                          <RadioGroupItem
+                            value="school_email"
+                            id="school_email"
+                          />
+                          <Label
+                            htmlFor="school_email"
+                            className="font-normal cursor-pointer"
+                          >
                             School Email Verification
                           </Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <RadioGroupItem value="id_card" id="id_card" />
-                          <Label htmlFor="id_card" className="font-normal cursor-pointer">
+                          <Label
+                            htmlFor="id_card"
+                            className="font-normal cursor-pointer"
+                          >
                             Student ID Card Upload
                           </Label>
                         </div>
@@ -189,7 +241,7 @@ export default function Signup() {
                 )}
               />
 
-              {verificationMethod === 'school_email' && (
+              {verificationMethod === "school_email" && (
                 <FormField
                   control={form.control}
                   name="schoolEmail"
@@ -197,10 +249,15 @@ export default function Signup() {
                     <FormItem>
                       <FormLabel>School Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="student@university.edu" {...field} />
+                        <Input
+                          type="email"
+                          placeholder="student@university.edu"
+                          {...field}
+                        />
                       </FormControl>
                       <FormDescription className="text-xs">
-                        Must be from an educational institution (.edu, .ac.uk, etc.)
+                        Must be from an educational institution (.edu, .ac.uk,
+                        etc.)
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -208,7 +265,7 @@ export default function Signup() {
                 />
               )}
 
-              {verificationMethod === 'id_card' && (
+              {verificationMethod === "id_card" && (
                 <FormField
                   control={form.control}
                   name="idCard"
@@ -238,9 +295,11 @@ export default function Signup() {
                 className="w-full"
                 disabled={form.formState.isSubmitting}
               >
-                {form.formState.isSubmitting ? 'Creating account...' : 'Create Account'}
+                {form.formState.isSubmitting
+                  ? "Creating account..."
+                  : "Create Account"}
               </Button>
-              
+
               <div className="relative w-full">
                 <Separator className="my-4" />
                 <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
@@ -276,8 +335,11 @@ export default function Signup() {
               </Button>
 
               <p className="text-sm text-muted-foreground text-center">
-                Already have an account?{' '}
-                <Link to="/login" className="text-primary hover:underline font-medium">
+                Already have an account?{" "}
+                <Link
+                  to="/login"
+                  className="text-primary hover:underline font-medium"
+                >
                   Login
                 </Link>
               </p>

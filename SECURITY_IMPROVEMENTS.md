@@ -3,11 +3,13 @@
 ## ✅ Completed Security Fixes
 
 ### 1. Database Constraints for Input Validation
+
 **Status**: ✅ Implemented
 
 Added server-side length validation using PostgreSQL CHECK constraints:
+
 - Comments: max 5,000 characters
-- Record titles: max 200 characters  
+- Record titles: max 200 characters
 - Record descriptions: max 5,000 characters
 - Profile bio: max 500 characters
 - Profile school: max 200 characters
@@ -17,9 +19,11 @@ Added server-side length validation using PostgreSQL CHECK constraints:
 ---
 
 ### 2. Reaction Type Validation (ENUM Enforcement)
+
 **Status**: ✅ Implemented
 
 Created PostgreSQL ENUM type for reactions to prevent arbitrary values:
+
 ```sql
 CREATE TYPE reaction_type AS ENUM (
   'amazing', 'funny', 'respect', 'inspiring', 'risky', 'unbelievable'
@@ -33,6 +37,7 @@ Only these 6 reaction types can now be stored in the database. Any attempt to in
 ---
 
 ### 3. Fixed RLS Policy - Email & Sensitive Data Protection
+
 **Status**: ✅ Implemented
 
 **Problem**: The previous RLS policy allowed SELECT on ALL columns when `is_public = true`, exposing user emails and ID card URLs.
@@ -44,6 +49,7 @@ Only these 6 reaction types can now be stored in the database. Any attempt to in
 3. **Admins**: Can see all profiles with all columns
 
 **New Policy**:
+
 ```sql
 CREATE POLICY "Users can view public profile info only"
 ON profiles FOR SELECT
@@ -61,41 +67,49 @@ USING (
 ---
 
 ### 4. Rate Limiting (Database-Level)
+
 **Status**: ✅ Implemented
 
 Implemented PostgreSQL triggers to prevent spam and abuse:
 
 #### Comment Rate Limits:
+
 - **Daily limit**: 100 comments per user per day
 - **Cooldown**: 3 seconds between comments
 - **Error messages**: User-friendly error when limits exceeded
 
 #### Reaction Rate Limits:
+
 - **Hourly limit**: 200 reactions per user per hour
 - **Prevents**: Reaction spam attacks
 
 #### Record Submission Rate Limits:
+
 - **Daily limit**: 5 record submissions per user per day
 - **Prevents**: Spam record creation
 
-**Location**: 
+**Location**:
+
 - Database triggers: `20251112-xxxxxx` migration
 - Client-side error handling: `CommentThread.tsx`, `ReactionButtons.tsx`, `CreateRecord.tsx`
 
 ---
 
 ### 5. Server-Side Validation Triggers
+
 **Status**: ✅ Implemented
 
 Created database triggers that validate all user input before insertion:
 
 #### Comment Validation:
+
 - Trims whitespace
 - Rejects empty content
 - Enforces max length
 - Sanitizes excessive whitespace
 
 #### Record Validation:
+
 - Trims whitespace from title and description
 - Rejects empty fields
 - Enforces max lengths
@@ -105,6 +119,7 @@ Created database triggers that validate all user input before insertion:
 ---
 
 ### 6. ID Card Security Fix
+
 **Status**: ✅ Implemented
 
 **Problem**: ID cards were stored using public URLs on a supposedly private bucket.
@@ -113,9 +128,9 @@ Created database triggers that validate all user input before insertion:
 
 ```typescript
 // OLD (INSECURE):
-const { data: { publicUrl } } = supabase.storage
-  .from('id-cards')
-  .getPublicUrl(fileName);
+const {
+  data: { publicUrl },
+} = supabase.storage.from("id-cards").getPublicUrl(fileName);
 return publicUrl;
 
 // NEW (SECURE):
@@ -132,12 +147,14 @@ return fileName;
 ## ⚠️ Required User Actions
 
 ### Enable Leaked Password Protection
+
 **Status**: ⚠️ Requires user action in backend settings
 
 **What it does**: Prevents users from signing up with passwords that have been exposed in known data breaches.
 
 **How to enable**:
-1. Open your Lovable Cloud backend settings
+
+1. Open your project backend or hosting provider settings
 2. Navigate to **Authentication** → **Password Security**
 3. Enable **"Leaked Password Protection"**
 4. Save changes
@@ -149,6 +166,7 @@ return fileName;
 ## 🛡️ Security Posture Summary
 
 ### Before Fixes:
+
 - ❌ No input length validation (database level)
 - ❌ Arbitrary reaction types accepted
 - ❌ User emails exposed via direct queries
@@ -157,6 +175,7 @@ return fileName;
 - ❌ Client-side validation only
 
 ### After Fixes:
+
 - ✅ Database-level length constraints
 - ✅ ENUM-enforced reaction types
 - ✅ RLS policy prevents email exposure
@@ -169,12 +188,12 @@ return fileName;
 
 ## 📊 Rate Limit Details
 
-| Resource | Limit | Window | Error Handling |
-|----------|-------|--------|----------------|
-| Comments | 100 per user | 24 hours | User-friendly toast message |
-| Comments | 1 per user | 3 seconds | "Please wait 3 seconds" message |
-| Reactions | 200 per user | 1 hour | "Rate limit exceeded" message |
-| Records | 5 per user | 24 hours | "Daily limit reached" message |
+| Resource  | Limit        | Window    | Error Handling                  |
+| --------- | ------------ | --------- | ------------------------------- |
+| Comments  | 100 per user | 24 hours  | User-friendly toast message     |
+| Comments  | 1 per user   | 3 seconds | "Please wait 3 seconds" message |
+| Reactions | 200 per user | 1 hour    | "Rate limit exceeded" message   |
+| Records   | 5 per user   | 24 hours  | "Daily limit reached" message   |
 
 ---
 

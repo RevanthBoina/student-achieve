@@ -41,7 +41,10 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/leaderboard" className="hover:text-gold transition-colors">
+                <Link
+                  to="/leaderboard"
+                  className="hover:text-gold transition-colors"
+                >
                   Leaderboard
                 </Link>
               </li>
@@ -58,7 +61,10 @@ export function Footer() {
             <h3 className="font-bold font-poppins text-lg mb-4">Submit</h3>
             <ul className="space-y-2 text-sm text-primary-foreground/80">
               <li>
-                <Link to="/create-break" className="hover:text-gold transition-colors">
+                <Link
+                  to="/create-break"
+                  className="hover:text-gold transition-colors"
+                >
                   New Record
                 </Link>
               </li>
@@ -80,7 +86,10 @@ export function Footer() {
             <h3 className="font-bold font-poppins text-lg mb-4">Legal</h3>
             <ul className="space-y-2 text-sm text-primary-foreground/80">
               <li>
-                <Link to="/privacy" className="hover:text-gold transition-colors">
+                <Link
+                  to="/privacy"
+                  className="hover:text-gold transition-colors"
+                >
                   Privacy Policy
                 </Link>
               </li>

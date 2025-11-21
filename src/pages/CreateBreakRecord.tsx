@@ -2,12 +2,24 @@ import { useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { BackButton } from "@/components/BackButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PlusCircle, Trophy, Upload, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +33,16 @@ export default function CreateBreakRecord() {
   const [activeTab, setActiveTab] = useState("create");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  type AnalysisResult = {
+    fraudScore: number;
+    contentQualityScore: number;
+    flags: string[];
+    recommendedAction: string;
+    suggestions?: string[];
+    details?: unknown;
+  };
+
+  const [aiAnalysis, setAiAnalysis] = useState<AnalysisResult | null>(null);
 
   // Create New Record Form State
   const [createForm, setCreateForm] = useState({
@@ -42,7 +63,7 @@ export default function CreateBreakRecord() {
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast({
         title: "Error",
@@ -54,20 +75,23 @@ export default function CreateBreakRecord() {
 
     setIsAnalyzing(true);
     setAiAnalysis(null);
-    
+
     try {
       // Step 1: Run AI analysis
-      const analysisResponse = await supabase.functions.invoke('analyze-submission', {
-        body: {
-          title: createForm.title,
-          description: createForm.description,
-          googleDriveLink: createForm.proofUrl,
-          userId: user.id
-        }
-      });
+      const analysisResponse = await supabase.functions.invoke(
+        "analyze-submission",
+        {
+          body: {
+            title: createForm.title,
+            description: createForm.description,
+            googleDriveLink: createForm.proofUrl,
+            userId: user.id,
+          },
+        },
+      );
 
       if (analysisResponse.error) {
-        throw new Error(analysisResponse.error.message || 'AI analysis failed');
+        throw new Error(analysisResponse.error.message || "AI analysis failed");
       }
 
       const analysis = analysisResponse.data;
@@ -75,10 +99,11 @@ export default function CreateBreakRecord() {
       setIsAnalyzing(false);
 
       // If auto-reject, don't proceed with submission
-      if (analysis.recommendedAction === 'reject') {
+      if (analysis.recommendedAction === "reject") {
         toast({
           title: "Submission Not Accepted",
-          description: "Please address the issues highlighted below and try again.",
+          description:
+            "Please address the issues highlighted below and try again.",
           variant: "destructive",
         });
         return;
@@ -86,19 +111,19 @@ export default function CreateBreakRecord() {
 
       // Step 2: Submit record to database
       setIsSubmitting(true);
-      
+
       const { data: record, error: recordError } = await supabase
-        .from('records')
+        .from("records")
         .insert({
           user_id: user.id,
           title: createForm.title,
           description: createForm.description,
           evidence_url: createForm.proofUrl,
           category_id: createForm.category,
-          status: 'pending',
+          status: "pending",
           ai_fraud_score: analysis.fraudScore,
           ai_flags: analysis.flags,
-          ai_reviewed: true
+          ai_reviewed: true,
         })
         .select()
         .single();
@@ -107,31 +132,33 @@ export default function CreateBreakRecord() {
 
       // Step 3: Store AI moderation results
       const { error: aiError } = await supabase
-        .from('ai_moderation_results' as any)
+        .from("ai_moderation_results" as any)
         .insert({
           record_id: record.id,
           fraud_score: analysis.fraudScore,
           content_quality_score: analysis.contentQualityScore,
           flags: analysis.flags,
           recommended_action: analysis.recommendedAction,
-          analysis_details: analysis.details
+          analysis_details: analysis.details,
         });
 
-      if (aiError) console.error('Failed to store AI results:', aiError);
+      if (aiError) console.error("Failed to store AI results:", aiError);
 
       toast({
         title: "Record Created!",
-        description: analysis.recommendedAction === 'review' 
-          ? "Your record has been flagged for detailed review."
-          : "Your record has been submitted for verification.",
+        description:
+          analysis.recommendedAction === "review"
+            ? "Your record has been flagged for detailed review."
+            : "Your record has been submitted for verification.",
       });
-      
+
       navigate("/");
     } catch (error: any) {
-      console.error('Submission error:', error);
+      console.error("Submission error:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create record. Please try again.",
+        description:
+          error.message || "Failed to create record. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -143,7 +170,7 @@ export default function CreateBreakRecord() {
   const handleBreakSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       // TODO: Implement actual submission logic
       toast({
@@ -170,12 +197,12 @@ export default function CreateBreakRecord() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <main className="container py-8 max-w-4xl">
         <BackButton />
         <BackButton />
         <BackButton to="/" />
-        
+
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Create or Break a Record</h1>
           <p className="text-muted-foreground">
@@ -212,7 +239,9 @@ export default function CreateBreakRecord() {
                       id="create-title"
                       placeholder="e.g., Most Push-ups in 1 Minute"
                       value={createForm.title}
-                      onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
+                      onChange={(e) =>
+                        setCreateForm({ ...createForm, title: e.target.value })
+                      }
                       maxLength={200}
                       required
                     />
@@ -225,14 +254,20 @@ export default function CreateBreakRecord() {
                     <Label htmlFor="create-category">Category *</Label>
                     <Select
                       value={createForm.category}
-                      onValueChange={(value) => setCreateForm({ ...createForm, category: value })}
+                      onValueChange={(value) =>
+                        setCreateForm({ ...createForm, category: value })
+                      }
                     >
                       <SelectTrigger id="create-category">
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="sports">Sports & Athletics</SelectItem>
-                        <SelectItem value="academic">Academic Excellence</SelectItem>
+                        <SelectItem value="sports">
+                          Sports & Athletics
+                        </SelectItem>
+                        <SelectItem value="academic">
+                          Academic Excellence
+                        </SelectItem>
                         <SelectItem value="creative">Creative Arts</SelectItem>
                         <SelectItem value="technology">Technology</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
@@ -241,12 +276,19 @@ export default function CreateBreakRecord() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="create-achievement">Your Achievement *</Label>
+                    <Label htmlFor="create-achievement">
+                      Your Achievement *
+                    </Label>
                     <Input
                       id="create-achievement"
                       placeholder="e.g., 75 push-ups"
                       value={createForm.achievement}
-                      onChange={(e) => setCreateForm({ ...createForm, achievement: e.target.value })}
+                      onChange={(e) =>
+                        setCreateForm({
+                          ...createForm,
+                          achievement: e.target.value,
+                        })
+                      }
                       required
                     />
                   </div>
@@ -257,7 +299,12 @@ export default function CreateBreakRecord() {
                       id="create-description"
                       placeholder="Describe your achievement, the conditions, and any relevant details..."
                       value={createForm.description}
-                      onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                      onChange={(e) =>
+                        setCreateForm({
+                          ...createForm,
+                          description: e.target.value,
+                        })
+                      }
                       maxLength={5000}
                       rows={5}
                       required
@@ -268,13 +315,20 @@ export default function CreateBreakRecord() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="create-proof">Google Drive Proof URL *</Label>
+                    <Label htmlFor="create-proof">
+                      Google Drive Proof URL *
+                    </Label>
                     <div className="flex gap-2">
                       <Input
                         id="create-proof"
                         placeholder="https://drive.google.com/..."
                         value={createForm.proofUrl}
-                        onChange={(e) => setCreateForm({ ...createForm, proofUrl: e.target.value })}
+                        onChange={(e) =>
+                          setCreateForm({
+                            ...createForm,
+                            proofUrl: e.target.value,
+                          })
+                        }
                         required
                       />
                       <Button type="button" variant="outline" size="icon">
@@ -282,7 +336,8 @@ export default function CreateBreakRecord() {
                       </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Upload video/photo proof to Google Drive and paste the shareable link
+                      Upload video/photo proof to Google Drive and paste the
+                      shareable link
                     </p>
                   </div>
 
@@ -298,13 +353,19 @@ export default function CreateBreakRecord() {
                     </div>
                   )}
 
-                  <Button 
-                    type="submit" 
-                    className="w-full" 
+                  <Button
+                    type="submit"
+                    className="w-full"
                     disabled={isSubmitting || isAnalyzing}
                   >
-                    {isAnalyzing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isAnalyzing ? "Analyzing submission..." : isSubmitting ? "Submitting..." : "Submit New Record"}
+                    {isAnalyzing && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {isAnalyzing
+                      ? "Analyzing submission..."
+                      : isSubmitting
+                        ? "Submitting..."
+                        : "Submit New Record"}
                   </Button>
                 </form>
               </CardContent>
@@ -328,7 +389,12 @@ export default function CreateBreakRecord() {
                       id="break-search"
                       placeholder="Search by title or category..."
                       value={breakForm.recordSearch}
-                      onChange={(e) => setBreakForm({ ...breakForm, recordSearch: e.target.value })}
+                      onChange={(e) =>
+                        setBreakForm({
+                          ...breakForm,
+                          recordSearch: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
@@ -336,15 +402,23 @@ export default function CreateBreakRecord() {
                     <Label htmlFor="break-select">Select Record *</Label>
                     <Select
                       value={breakForm.selectedRecord}
-                      onValueChange={(value) => setBreakForm({ ...breakForm, selectedRecord: value })}
+                      onValueChange={(value) =>
+                        setBreakForm({ ...breakForm, selectedRecord: value })
+                      }
                     >
                       <SelectTrigger id="break-select">
                         <SelectValue placeholder="Choose a record to break" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="record1">Most Push-ups in 1 Minute (75)</SelectItem>
-                        <SelectItem value="record2">Longest Plank Hold (10 min)</SelectItem>
-                        <SelectItem value="record3">Most Books Read in a Month (25)</SelectItem>
+                        <SelectItem value="record1">
+                          Most Push-ups in 1 Minute (75)
+                        </SelectItem>
+                        <SelectItem value="record2">
+                          Longest Plank Hold (10 min)
+                        </SelectItem>
+                        <SelectItem value="record3">
+                          Most Books Read in a Month (25)
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -356,7 +430,9 @@ export default function CreateBreakRecord() {
                         <p className="text-sm text-muted-foreground mb-1">
                           Most Push-ups in 1 Minute
                         </p>
-                        <p className="text-2xl font-bold text-primary">75 push-ups</p>
+                        <p className="text-2xl font-bold text-primary">
+                          75 push-ups
+                        </p>
                         <p className="text-sm text-muted-foreground mt-2">
                           Held by John Doe • Verified on Jan 15, 2025
                         </p>
@@ -365,12 +441,19 @@ export default function CreateBreakRecord() {
                   )}
 
                   <div className="space-y-2">
-                    <Label htmlFor="break-achievement">Your Achievement *</Label>
+                    <Label htmlFor="break-achievement">
+                      Your Achievement *
+                    </Label>
                     <Input
                       id="break-achievement"
                       placeholder="e.g., 82 push-ups"
                       value={breakForm.achievement}
-                      onChange={(e) => setBreakForm({ ...breakForm, achievement: e.target.value })}
+                      onChange={(e) =>
+                        setBreakForm({
+                          ...breakForm,
+                          achievement: e.target.value,
+                        })
+                      }
                       required
                     />
                     <p className="text-xs text-muted-foreground">
@@ -379,13 +462,20 @@ export default function CreateBreakRecord() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="break-proof">Google Drive Proof URL *</Label>
+                    <Label htmlFor="break-proof">
+                      Google Drive Proof URL *
+                    </Label>
                     <div className="flex gap-2">
                       <Input
                         id="break-proof"
                         placeholder="https://drive.google.com/..."
                         value={breakForm.proofUrl}
-                        onChange={(e) => setBreakForm({ ...breakForm, proofUrl: e.target.value })}
+                        onChange={(e) =>
+                          setBreakForm({
+                            ...breakForm,
+                            proofUrl: e.target.value,
+                          })
+                        }
                         required
                       />
                       <Button type="button" variant="outline" size="icon">
@@ -393,11 +483,16 @@ export default function CreateBreakRecord() {
                       </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Upload video/photo proof to Google Drive and paste the shareable link
+                      Upload video/photo proof to Google Drive and paste the
+                      shareable link
                     </p>
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isSubmitting}
+                  >
                     {isSubmitting ? "Submitting..." : "Submit Break Attempt"}
                   </Button>
                 </form>

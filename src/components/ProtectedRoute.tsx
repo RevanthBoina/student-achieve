@@ -1,13 +1,16 @@
-import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { ReactNode } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
   children: ReactNode;
   requireVerified?: boolean;
 }
 
-export function ProtectedRoute({ children, requireVerified = false }: ProtectedRouteProps) {
+export function ProtectedRoute({
+  children,
+  requireVerified = false,
+}: ProtectedRouteProps) {
   const { user, loading } = useAuth();
 
   if (loading) {

@@ -22,7 +22,10 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
           {idx === items.length - 1 ? (
             <span className="font-medium text-foreground">{item.label}</span>
           ) : (
-            <Link to={item.href} className="hover:text-foreground transition-colors">
+            <Link
+              to={item.href}
+              className="hover:text-foreground transition-colors"
+            >
               {item.label}
             </Link>
           )}

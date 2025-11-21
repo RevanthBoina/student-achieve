@@ -29,8 +29,9 @@ export function AdminAIInsights() {
   const fetchAIInsights = async () => {
     try {
       const { data, error } = await supabase
-        .from('ai_moderation_results' as any)
-        .select(`
+        .from("ai_moderation_results")
+        .select(
+          `
           id,
           record_id,
           fraud_score,
@@ -39,35 +40,43 @@ export function AdminAIInsights() {
           recommended_action,
           analyzed_at,
           records!inner(title, status)
-        `)
-        .eq('records.status', 'pending')
-        .order('fraud_score', { ascending: false })
+        `,
+        )
+        .eq("records.status", "pending")
+        .order("fraud_score", { ascending: false })
         .limit(10);
 
       if (error) throw error;
-      
-      const formatted = data?.map((item: any) => ({
-        ...item,
-        record: item.records
-      })) || [];
-      
+
+      const formatted: AIInsight[] = (data || []).map((item: any) => ({
+        id: item.id,
+        record_id: item.record_id,
+        fraud_score: item.fraud_score,
+        content_quality_score: item.content_quality_score,
+        flags: item.flags || [],
+        recommended_action: item.recommended_action,
+        analyzed_at: item.analyzed_at,
+        record: item.records ? { title: item.records.title, status: item.records.status } : { title: "", status: "" },
+      }));
+
       setInsights(formatted);
     } catch (error) {
-      console.error('Failed to fetch AI insights:', error);
+      console.error("Failed to fetch AI insights:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const getRiskColor = (score: number) => {
-    if (score > 0.7) return 'text-red-600';
-    if (score > 0.4) return 'text-yellow-600';
-    return 'text-green-600';
+    if (score > 0.7) return "text-red-600";
+    if (score > 0.4) return "text-yellow-600";
+    return "text-green-600";
   };
 
   const getRiskIcon = (score: number) => {
     if (score > 0.7) return <XCircle className="h-5 w-5 text-red-600" />;
-    if (score > 0.4) return <AlertTriangle className="h-5 w-5 text-yellow-600" />;
+    if (score > 0.4)
+      return <AlertTriangle className="h-5 w-5 text-yellow-600" />;
     return <CheckCircle className="h-5 w-5 text-green-600" />;
   };
 
@@ -103,8 +112,12 @@ export function AdminAIInsights() {
 
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
-                    <div className="text-xs text-muted-foreground">Fraud Risk</div>
-                    <div className={`text-lg font-bold ${getRiskColor(insight.fraud_score)}`}>
+                    <div className="text-xs text-muted-foreground">
+                      Fraud Risk
+                    </div>
+                    <div
+                      className={`text-lg font-bold ${getRiskColor(insight.fraud_score)}`}
+                    >
                       {(insight.fraud_score * 100).toFixed(0)}%
                     </div>
                   </div>
@@ -120,7 +133,7 @@ export function AdminAIInsights() {
                   <div className="flex flex-wrap gap-1 mb-2">
                     {insight.flags.map((flag, idx) => (
                       <Badge key={idx} variant="secondary" className="text-xs">
-                        {flag.replace(/_/g, ' ')}
+                        {flag.replace(/_/g, " ")}
                       </Badge>
                     ))}
                   </div>
@@ -129,9 +142,11 @@ export function AdminAIInsights() {
                 <div className="flex items-center justify-between mt-3 pt-3 border-t">
                   <Badge
                     variant={
-                      insight.recommended_action === 'reject' ? 'destructive' :
-                      insight.recommended_action === 'review' ? 'default' :
-                      'default'
+                      insight.recommended_action === "reject"
+                        ? "destructive"
+                        : insight.recommended_action === "review"
+                          ? "default"
+                          : "default"
                     }
                   >
                     AI: {insight.recommended_action.toUpperCase()}

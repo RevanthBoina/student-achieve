@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { formatDistanceToNow } from 'date-fns';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/hooks/use-toast';
-import { Heart, Reply } from 'lucide-react';
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { formatDistanceToNow } from "date-fns";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
+import { Heart, Reply } from "lucide-react";
 
 interface Comment {
   id: string;
@@ -27,39 +27,15 @@ interface CommentThreadProps {
 export const CommentThread = ({ recordId }: CommentThreadProps) => {
   const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
-  const [newComment, setNewComment] = useState('');
+  const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    loadComments();
-
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel(`comments:${recordId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'comments',
-          filter: `record_id=eq.${recordId}`,
-        },
-        () => {
-          loadComments();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [recordId]);
-
-  const loadComments = async () => {
+  const loadComments = useCallback(async () => {
     const { data, error } = await supabase
-      .from('comments')
-      .select(`
+      .from("comments")
+      .select(
+        `
         id,
         content,
         created_at,
@@ -69,24 +45,64 @@ export const CommentThread = ({ recordId }: CommentThreadProps) => {
           full_name,
           avatar_url
         )
-      `)
-      .eq('record_id', recordId)
-      .order('created_at', { ascending: true });
+      `,
+      )
+      .eq("record_id", recordId)
+      .order("created_at", { ascending: true });
 
     if (error) {
-      console.error('Error loading comments:', error);
+      console.error("Error loading comments:", error);
       return;
     }
 
-    setComments(data as any);
-  };
+    // Normalize response to Comment[] shape
+    const formatted: Comment[] = (data || []).map((row: any) => ({
+      id: row.id,
+      content: row.content,
+      created_at: row.created_at,
+      user_id: row.user_id,
+      parent_id: row.parent_id,
+      profile: {
+        full_name: row.profiles?.full_name || "Unknown",
+        avatar_url: row.profiles?.avatar_url,
+      },
+    }));
+
+    setComments(formatted);
+  }, [recordId]);
+
+  useEffect(() => {
+    loadComments();
+
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel(`comments:${recordId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "comments",
+          filter: `record_id=eq.${recordId}`,
+        },
+        () => {
+          loadComments();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [recordId, loadComments]);
+  
 
   const handleSubmit = async () => {
     if (!user) {
       toast({
-        title: 'Login Required',
-        description: 'Please login to comment',
-        variant: 'destructive',
+        title: "Login Required",
+        description: "Please login to comment",
+        variant: "destructive",
       });
       return;
     }
@@ -96,7 +112,7 @@ export const CommentThread = ({ recordId }: CommentThreadProps) => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.from('comments').insert({
+      const { error } = await supabase.from("comments").insert({
         record_id: recordId,
         user_id: user.id,
         content: newComment,
@@ -105,11 +121,14 @@ export const CommentThread = ({ recordId }: CommentThreadProps) => {
 
       if (error) {
         // Handle rate limit errors gracefully
-        if (error.message.includes('rate limit') || error.message.includes('limit reached')) {
+        if (
+          error.message.includes("rate limit") ||
+          error.message.includes("limit reached")
+        ) {
           toast({
-            title: 'Rate limit exceeded',
+            title: "Rate limit exceeded",
             description: error.message,
-            variant: 'destructive',
+            variant: "destructive",
           });
           setLoading(false);
           return;
@@ -117,17 +136,17 @@ export const CommentThread = ({ recordId }: CommentThreadProps) => {
         throw error;
       }
 
-      setNewComment('');
+      setNewComment("");
       setReplyTo(null);
       toast({
-        title: 'Comment posted',
-        description: 'Your comment has been added',
+        title: "Comment posted",
+        description: "Your comment has been added",
       });
     } catch (error: any) {
       toast({
-        title: 'Error',
+        title: "Error",
         description: error.message,
-        variant: 'destructive',
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -140,12 +159,18 @@ export const CommentThread = ({ recordId }: CommentThreadProps) => {
     return comments.filter((c) => c.parent_id === commentId);
   };
 
-  const CommentItem = ({ comment, depth = 0 }: { comment: Comment; depth?: number }) => {
+  const CommentItem = ({
+    comment,
+    depth = 0,
+  }: {
+    comment: Comment;
+    depth?: number;
+  }) => {
     const replies = getReplies(comment.id);
     const canReply = depth < 2; // Max 2 levels deep
 
     return (
-      <div className={depth > 0 ? 'ml-8 mt-3' : 'mt-3'}>
+      <div className={depth > 0 ? "ml-8 mt-3" : "mt-3"}>
         <div className="flex gap-3">
           <Avatar className="h-8 w-8">
             <AvatarImage src={comment.profile.avatar_url} />
@@ -153,12 +178,16 @@ export const CommentThread = ({ recordId }: CommentThreadProps) => {
           </Avatar>
           <div className="flex-1">
             <div className="bg-muted rounded-lg p-3">
-              <p className="font-semibold text-sm">{comment.profile.full_name}</p>
+              <p className="font-semibold text-sm">
+                {comment.profile.full_name}
+              </p>
               <p className="text-sm mt-1">{comment.content}</p>
             </div>
             <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
               <span>
-                {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                {formatDistanceToNow(new Date(comment.created_at), {
+                  addSuffix: true,
+                })}
               </span>
               <button className="hover:text-foreground flex items-center gap-1">
                 <Heart className="h-3 w-3" /> Like
@@ -201,7 +230,7 @@ export const CommentThread = ({ recordId }: CommentThreadProps) => {
         <div className="flex gap-3">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user?.user_metadata?.avatar_url} />
-            <AvatarFallback>{user?.email?.[0] || 'U'}</AvatarFallback>
+            <AvatarFallback>{user?.email?.[0] || "U"}</AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <Textarea

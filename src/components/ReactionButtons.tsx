@@ -1,19 +1,23 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const REACTION_TYPES = [
-  { type: 'amazing', emoji: '🙌', label: 'Hands-off (Amazing)' },
-  { type: 'funny', emoji: '🤣', label: 'Laughing (Funny)' },
-  { type: 'respect', emoji: '🫡', label: 'Saluting (Respect)' },
-  { type: 'inspiring', emoji: '🫶🏻', label: 'Support (Inspiring)' },
-  { type: 'risky', emoji: '☠️', label: 'Dangerous (Risky)' },
-  { type: 'unbelievable', emoji: '🤯', label: 'Mind Blowing' },
+  { type: "amazing", emoji: "🙌", label: "Hands-off (Amazing)" },
+  { type: "funny", emoji: "🤣", label: "Laughing (Funny)" },
+  { type: "respect", emoji: "🫡", label: "Saluting (Respect)" },
+  { type: "inspiring", emoji: "🫶🏻", label: "Support (Inspiring)" },
+  { type: "risky", emoji: "☠️", label: "Dangerous (Risky)" },
+  { type: "unbelievable", emoji: "🤯", label: "Mind Blowing" },
 ];
 
 interface ReactionButtonsProps {
@@ -36,35 +40,11 @@ export const ReactionButtons = ({ recordId }: ReactionButtonsProps) => {
   const [userReaction, setUserReaction] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    loadReactions();
-    
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel(`reactions:${recordId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'reactions',
-          filter: `record_id=eq.${recordId}`,
-        },
-        () => {
-          loadReactions();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [recordId, user]);
-
-  const loadReactions = async () => {
+  const loadReactions = useCallback(async () => {
     const { data, error } = await supabase
-      .from('reactions')
-      .select(`
+      .from("reactions")
+      .select(
+        `
         id,
         type,
         user_id,
@@ -72,28 +52,61 @@ export const ReactionButtons = ({ recordId }: ReactionButtonsProps) => {
           full_name,
           avatar_url
         )
-      `)
-      .eq('record_id', recordId);
+      `,
+      )
+      .eq("record_id", recordId);
 
     if (error) {
-      console.error('Error loading reactions:', error);
+      console.error("Error loading reactions:", error);
       return;
     }
 
-    setReactions(data as any);
-    
+    const formatted: Reaction[] = (data || []).map((r: any) => ({
+      id: r.id,
+      type: r.type,
+      user_id: r.user_id,
+      user: r.profiles ? { full_name: r.profiles.full_name, avatar_url: r.profiles.avatar_url } : undefined,
+    }));
+
+    setReactions(formatted);
+
     if (user) {
-      const userRx = data.find((r) => r.user_id === user.id);
+      const userRx = formatted.find((r) => r.user_id === user.id);
       setUserReaction(userRx?.type || null);
     }
-  };
+  }, [recordId, user]);
+
+  useEffect(() => {
+    loadReactions();
+
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel(`reactions:${recordId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "reactions",
+          filter: `record_id=eq.${recordId}`,
+        },
+        () => {
+          loadReactions();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [recordId, user, loadReactions]);
 
   const handleReaction = async (type: string) => {
     if (!user) {
       toast({
-        title: 'Login Required',
-        description: 'Please login to react to records',
-        variant: 'destructive',
+        title: "Login Required",
+        description: "Please login to react to records",
+        variant: "destructive",
       });
       return;
     }
@@ -104,10 +117,10 @@ export const ReactionButtons = ({ recordId }: ReactionButtonsProps) => {
       // If clicking same reaction, remove it
       if (userReaction === type) {
         const { error } = await supabase
-          .from('reactions')
+          .from("reactions")
           .delete()
-          .eq('record_id', recordId)
-          .eq('user_id', user.id);
+          .eq("record_id", recordId)
+          .eq("user_id", user.id);
 
         if (error) throw error;
         setUserReaction(null);
@@ -115,28 +128,31 @@ export const ReactionButtons = ({ recordId }: ReactionButtonsProps) => {
         // Remove existing reaction first
         if (userReaction) {
           await supabase
-            .from('reactions')
+            .from("reactions")
             .delete()
-            .eq('record_id', recordId)
-            .eq('user_id', user.id);
+            .eq("record_id", recordId)
+            .eq("user_id", user.id);
         }
 
         // Add new reaction
-        const { error } = await supabase
-          .from('reactions')
-          .insert([{
+        const { error } = await supabase.from("reactions").insert([
+          {
             record_id: recordId,
             user_id: user.id,
             type: type as any,
-          }]);
+          },
+        ]);
 
         if (error) {
           // Handle rate limit errors gracefully
-          if (error.message.includes('rate limit') || error.message.includes('limit reached')) {
+          if (
+            error.message.includes("rate limit") ||
+            error.message.includes("limit reached")
+          ) {
             toast({
-              title: 'Rate limit exceeded',
+              title: "Rate limit exceeded",
               description: error.message,
-              variant: 'destructive',
+              variant: "destructive",
             });
             setLoading(false);
             return;
@@ -147,9 +163,9 @@ export const ReactionButtons = ({ recordId }: ReactionButtonsProps) => {
       }
     } catch (error: any) {
       toast({
-        title: 'Error',
+        title: "Error",
         description: error.message,
-        variant: 'destructive',
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -178,7 +194,7 @@ export const ReactionButtons = ({ recordId }: ReactionButtonsProps) => {
           <Tooltip key={type}>
             <TooltipTrigger asChild>
               <Button
-                variant={isActive ? 'default' : 'outline'}
+                variant={isActive ? "default" : "outline"}
                 size="sm"
                 onClick={() => handleReaction(type)}
                 disabled={loading}

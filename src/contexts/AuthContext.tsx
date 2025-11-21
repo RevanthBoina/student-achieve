@@ -1,11 +1,19 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { User, Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
+  profile: {
+    id: string;
+    full_name?: string | null;
+    avatar_url?: string | null;
+    bio?: string | null;
+    school?: string | null;
+    is_public?: boolean | null;
+  } | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ error: Error | null }>;
   signup: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
@@ -19,24 +27,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<AuthContextType["profile"]>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
-      if (event === 'SIGNED_OUT') {
+      if (event === "SIGNED_OUT") {
         setUser(null);
         setSession(null);
       }
     });
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user) loadProfile(session.user.id).catch(console.error);
       setLoading(false);
     });
 
@@ -53,21 +60,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const loadProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url, bio, school, is_public")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setProfile(data as AuthContextType["profile"]);
+        return data as AuthContextType["profile"];
+      }
+
+      // Fallback to user metadata
+      const meta = session?.user?.user_metadata;
+      if (meta) {
+        const fallback = {
+          id: userId,
+          full_name: (meta as any).full_name || (meta as any).name || null,
+          avatar_url: (meta as any).avatar_url || (meta as any).picture || null,
+        };
+        setProfile(fallback);
+        return fallback;
+      }
+
+      setProfile(null);
+      return null;
+    } catch (err) {
+      console.error("loadProfile error", err);
+      setProfile(null);
+      return null;
+    }
+  };
+
   const signup = async (email: string, password: string, fullName: string) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
-      
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            full_name: fullName,
-          }
-        }
+        options: { emailRedirectTo: redirectUrl, data: { full_name: fullName } },
       });
-      
       if (error) throw error;
       return { error: null };
     } catch (error) {
@@ -77,13 +113,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        }
-      });
-      
+      // Use the explicitly requested callback URL for the Google provider
+      const redirectTo = "http://127.0.0.1:8082/auth/callback";
+      const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo } });
       if (error) throw error;
       return { error: null };
     } catch (error) {
@@ -94,10 +126,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await supabase.auth.signOut();
-      toast.success('Logged out successfully');
+      toast.success("Logged out successfully");
     } catch (error) {
-      toast.error('Error logging out');
-      console.error('Logout error:', error);
+      toast.error("Error logging out");
+      console.error("Logout error:", error);
     }
   };
 
@@ -107,14 +139,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user) await loadProfile(session.user.id);
     } catch (error) {
-      console.error('Session refresh error:', error);
+      console.error("Session refresh error:", error);
       await logout();
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, login, signup, signInWithGoogle, logout, refreshSession }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, login, signup, signInWithGoogle, logout, refreshSession }}>
       {children}
     </AuthContext.Provider>
   );
@@ -122,8 +155,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (context === undefined) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 }

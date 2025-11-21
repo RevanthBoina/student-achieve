@@ -52,7 +52,11 @@ export default function Leaderboard() {
       case 3:
         return <Award className="h-6 w-6 text-amber-700" />;
       default:
-        return <span className="text-2xl font-bold text-muted-foreground">#{rank}</span>;
+        return (
+          <span className="text-2xl font-bold text-muted-foreground">
+            #{rank}
+          </span>
+        );
     }
   };
 
@@ -72,7 +76,7 @@ export default function Leaderboard() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       <main className="container py-8 max-w-4xl">
         <BackButton />
         <div className="mb-8">
@@ -83,7 +87,11 @@ export default function Leaderboard() {
         </div>
 
         {/* Time Filter Tabs */}
-        <Tabs value={timeFilter} onValueChange={(v) => setTimeFilter(v as TimeFilter)} className="mb-6">
+        <Tabs
+          value={timeFilter}
+          onValueChange={(v) => setTimeFilter(v as TimeFilter)}
+          className="mb-6"
+        >
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="daily">Daily</TabsTrigger>
             <TabsTrigger value="weekly">Weekly</TabsTrigger>
@@ -105,7 +113,9 @@ export default function Leaderboard() {
                 <Medal className="h-4 w-4 text-white" />
               </div>
             </div>
-            <p className="font-semibold mt-3 text-center">{leaderboardData[1].name}</p>
+            <p className="font-semibold mt-3 text-center">
+              {leaderboardData[1].name}
+            </p>
             <Badge variant="secondary" className="mt-2">
               {leaderboardData[1].totalReactions} reactions
             </Badge>
@@ -122,7 +132,9 @@ export default function Leaderboard() {
                 <Trophy className="h-5 w-5 text-white" />
               </div>
             </div>
-            <p className="font-bold text-lg mt-3 text-center">{leaderboardData[0].name}</p>
+            <p className="font-bold text-lg mt-3 text-center">
+              {leaderboardData[0].name}
+            </p>
             <Badge className="mt-2 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white border-0">
               {leaderboardData[0].totalReactions} reactions
             </Badge>
@@ -139,7 +151,9 @@ export default function Leaderboard() {
                 <Award className="h-4 w-4 text-white" />
               </div>
             </div>
-            <p className="font-semibold mt-3 text-center">{leaderboardData[2].name}</p>
+            <p className="font-semibold mt-3 text-center">
+              {leaderboardData[2].name}
+            </p>
             <Badge variant="secondary" className="mt-2">
               {leaderboardData[2].totalReactions} reactions
             </Badge>
@@ -149,7 +163,10 @@ export default function Leaderboard() {
         {/* Full Leaderboard List */}
         <div className="space-y-3">
           {leaderboardData.map((entry) => (
-            <Card key={entry.userId} className={entry.rank <= 3 ? "border-2" : ""}>
+            <Card
+              key={entry.userId}
+              className={entry.rank <= 3 ? "border-2" : ""}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center gap-4">
                   {/* Rank */}
@@ -168,8 +185,14 @@ export default function Leaderboard() {
                     <div className="flex items-center gap-2">
                       <p className="font-semibold truncate">{entry.name}</p>
                       {entry.isVerified && (
-                        <Badge variant="outline" className="gap-1 text-success border-success">
-                          <svg className="h-3 w-3 fill-current" viewBox="0 0 24 24">
+                        <Badge
+                          variant="outline"
+                          className="gap-1 text-success border-success"
+                        >
+                          <svg
+                            className="h-3 w-3 fill-current"
+                            viewBox="0 0 24 24"
+                          >
                             <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           Verified
@@ -177,14 +200,17 @@ export default function Leaderboard() {
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {entry.recordsCount} {entry.recordsCount === 1 ? "record" : "records"}
+                      {entry.recordsCount}{" "}
+                      {entry.recordsCount === 1 ? "record" : "records"}
                     </p>
                   </div>
 
                   {/* Stats */}
                   <div className="text-right">
-                    <Badge 
-                      className={entry.rank <= 3 ? getRankBadgeColor(entry.rank) : ""}
+                    <Badge
+                      className={
+                        entry.rank <= 3 ? getRankBadgeColor(entry.rank) : ""
+                      }
                       variant={entry.rank <= 3 ? "default" : "secondary"}
                     >
                       <TrendingUp className="h-3 w-3 mr-1" />
@@ -199,7 +225,9 @@ export default function Leaderboard() {
           {/* More entries... */}
           <Card className="border-dashed">
             <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground">More rankings coming soon...</p>
+              <p className="text-muted-foreground">
+                More rankings coming soon...
+              </p>
             </CardContent>
           </Card>
         </div>

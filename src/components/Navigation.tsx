@@ -2,11 +2,12 @@ import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Home, Clock, PlusCircle, Trophy, User, LogOut } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 
 export function Navigation() {
-  const { user, logout } = useAuth();
+  const { user, profile, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -19,14 +20,14 @@ export function Navigation() {
     <nav className="sticky top-0 z-50 w-full bg-background border-b border-border shadow-sm">
       <div className="container flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-8">
-          <NavLink 
-            to="/" 
+          <NavLink
+            to="/"
             className="flex items-center gap-2 text-xl font-bold font-poppins text-primary hover:text-primary-light transition-colors"
           >
             <Trophy className="h-7 w-7 text-gold" />
             <span className="hidden sm:inline">SBWR</span>
           </NavLink>
-          
+
           <div className="hidden md:flex items-center gap-1">
             <NavLink
               to="/"
@@ -37,7 +38,7 @@ export function Navigation() {
               <Home className="h-4 w-4" />
               Home
             </NavLink>
-            
+
             <NavLink
               to="/pending-challenges"
               className="relative flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground rounded-md hover:text-foreground transition-colors"
@@ -46,7 +47,7 @@ export function Navigation() {
               <Clock className="h-4 w-4" />
               Pending
             </NavLink>
-            
+
             <NavLink
               to="/leaderboard"
               className="relative flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground rounded-md hover:text-foreground transition-colors"
@@ -67,14 +68,21 @@ export function Navigation() {
                   <span className="hidden sm:inline">Submit Record</span>
                 </Button>
               </NavLink>
-              
+
               <NavLink to={`/profile/${user.id}`}>
                 <Button variant="ghost" size="sm" className="gap-2 hover:text-gold">
-                  <User className="h-4 w-4" />
-                  <span className="hidden sm:inline">Profile</span>
+                  {profile?.avatar_url ? (
+                    <Avatar className="h-5 w-5">
+                      <AvatarImage src={profile.avatar_url} />
+                      <AvatarFallback>{profile.full_name?.[0] ?? user.email?.[0]}</AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <User className="h-4 w-4" />
+                  )}
+                  <span className="hidden sm:inline">{profile?.full_name ?? user.email}</span>
                 </Button>
               </NavLink>
-              
+
               <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2 hover:text-gold">
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:inline">Logout</span>
