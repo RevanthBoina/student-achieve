@@ -10,7 +10,7 @@ export function Footer() {
           <div>
             <h3 className="font-bold font-poppins text-lg mb-4 flex items-center gap-2">
               <Trophy className="h-5 w-5 text-gold" />
-              About SBWR
+              About Student World Records
             </h3>
             <ul className="space-y-2 text-sm text-primary-foreground/80">
               <li>
