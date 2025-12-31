@@ -113,8 +113,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      // Use the explicitly requested callback URL for the Google provider
-      const redirectTo = "http://127.0.0.1:8082/auth/callback";
+      // Make redirect URL configurable via Vite env var, fallback to origin
+      const redirectTo = (import.meta.env.VITE_SUPABASE_OAUTH_REDIRECT as string) || `${window.location.origin}/auth/callback`;
       const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo } });
       if (error) throw error;
       return { error: null };

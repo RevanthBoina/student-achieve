@@ -107,7 +107,6 @@ serve(async (req) => {
     // replace this stub with a call to your preferred moderation service and
     // set flags/contentQualityScore accordingly.
     const textToAnalyze = `Title: ${title}\nDescription: ${description}`;
-    console.log("AI moderation disabled — skipping external call");
 
     // Normalize scores
     fraudScore = Math.min(Math.max(fraudScore, 0), 1);
@@ -137,7 +136,6 @@ serve(async (req) => {
       },
     };
 
-    console.log("Analysis complete:", result);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
