@@ -9,8 +9,8 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuth = async () => {
       try {
-        // Exchange code for a session (Supabase will read code/state from URL)
-        const { data, error } = await supabase.auth.exchangeCodeForSession();
+        // Exchange code for a session using the current URL
+        const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
         if (error) {
           console.error("exchangeCodeForSession error:", error);
           toast.error("Authentication failed");
@@ -18,8 +18,8 @@ export default function AuthCallback() {
           return;
         }
 
-        // Optionally fetch and store profile here; AuthContext listens to auth changes
-        toast.success("Successfully signed in");
+        // Successfully authenticated - redirect to homepage
+        toast.success("Successfully signed in with Google!");
         navigate("/");
       } catch (err) {
         console.error("Auth callback handling error:", err);

@@ -28,8 +28,8 @@ export function AdminAIInsights() {
 
   const fetchAIInsights = async () => {
     try {
-      const { data, error } = await supabase
-        .from("ai_moderation_results")
+      const { data, error } = await (supabase
+        .from("ai_moderation_results" as any)
         .select(
           `
           id,
@@ -44,7 +44,7 @@ export function AdminAIInsights() {
         )
         .eq("records.status", "pending")
         .order("fraud_score", { ascending: false })
-        .limit(10);
+        .limit(10) as any);
 
       if (error) throw error;
 
