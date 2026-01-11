@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
-import { createRecordSchema, CreateRecordFormData } from "@/schemas/validation";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,6 +32,19 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { Upload, Loader2 } from "lucide-react";
+
+// Validation schema for the form
+const createRecordSchema = z.object({
+  studentName: z.string().min(2, "Student name must be at least 2 characters").max(100),
+  recordTitle: z.string().min(10, "Title must be at least 10 characters").max(200),
+  description: z.string().min(50, "Description must be at least 50 characters").max(5000),
+  categoryId: z.string().min(1, "Please select a category"),
+  schoolName: z.string().min(2, "School name must be at least 2 characters").max(200),
+  proofFile: z.instanceof(File, { message: "Please upload a proof image" }),
+});
+
+type CreateRecordFormData = z.infer<typeof createRecordSchema>;
 
 interface Category {
   id: string;
@@ -39,23 +52,37 @@ interface Category {
 }
 
 export default function CreateRecord() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const form = useForm<CreateRecordFormData>({
     resolver: zodResolver(createRecordSchema),
     defaultValues: {
-      title: "",
+      studentName: profile?.full_name || "",
+      recordTitle: "",
       description: "",
       categoryId: "",
+      schoolName: profile?.school || "",
     },
   });
 
   useEffect(() => {
     loadCategories();
   }, []);
+
+  // Pre-fill form when profile loads
+  useEffect(() => {
+    if (profile?.full_name) {
+      form.setValue("studentName", profile.full_name);
+    }
+    if (profile?.school) {
+      form.setValue("schoolName", profile.school);
+    }
+  }, [profile, form]);
 
   const loadCategories = async () => {
     try {
@@ -74,87 +101,93 @@ export default function CreateRecord() {
     }
   };
 
-  const uploadFiles = async (
-    files: File[],
-    bucket: string,
-  ): Promise<string[]> => {
-    if (!user) return [];
+  const uploadProofFile = async (file: File): Promise<string | null> => {
+    if (!user) return null;
 
-    const uploadPromises = files.map(async (file, index) => {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${user.id}/${Date.now()}-${index}.${fileExt}`;
+    // Step A: Rename file with timestamp to prevent duplicates
+    const fileExt = file.name.split(".").pop();
+    const timestamp = Date.now();
+    const fileName = `${user.id}/${timestamp}_${file.name}`;
 
+    setUploading(true);
+    try {
+      // Upload to record-proofs bucket
       const { error: uploadError } = await supabase.storage
-        .from(bucket)
+        .from("record-proofs")
         .upload(fileName, file);
 
       if (uploadError) {
         console.error("Upload error:", uploadError);
-        return null;
+        throw uploadError;
       }
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from(bucket).getPublicUrl(fileName);
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("record-proofs")
+        .getPublicUrl(fileName);
 
       return publicUrl;
-    });
-
-    const results = await Promise.all(uploadPromises);
-    return results.filter((url): url is string => url !== null);
+    } catch (error) {
+      console.error("File upload failed:", error);
+      toast.error("Failed to upload proof file");
+      return null;
+    } finally {
+      setUploading(false);
+    }
   };
 
   const onSubmit = async (data: CreateRecordFormData) => {
     if (!user) {
-      toast.error("You must be logged in to create a record");
+      toast.error("You must be logged in to submit a record");
       return;
     }
 
     try {
-      // Upload media files if any
-      let mediaUrl = null;
-      if (data.mediaFiles && data.mediaFiles.length > 0) {
-        const urls = await uploadFiles(data.mediaFiles, "record-media");
-        mediaUrl = urls[0]; // Store first media URL
+      // Step A: Upload file and get public URL
+      const proofImageUrl = await uploadProofFile(data.proofFile);
+      
+      if (!proofImageUrl) {
+        toast.error("Failed to upload proof image. Please try again.");
+        return;
       }
 
-      // Upload evidence files if any
-      let evidenceUrl = null;
-      if (data.evidenceFiles && data.evidenceFiles.length > 0) {
-        const urls = await uploadFiles(data.evidenceFiles, "evidence");
-        evidenceUrl = urls[0]; // Store first evidence URL
-      }
-
-      // Create the record
+      // Step B: Insert into records table
       const { error } = await supabase.from("records").insert({
-        title: data.title,
+        student_name: data.studentName,
+        title: data.recordTitle,
         description: data.description,
         category_id: data.categoryId,
-        user_id: user.id,
-        media_url: mediaUrl,
-        evidence_url: evidenceUrl,
+        school_name: data.schoolName,
+        media_url: proofImageUrl, // Store proof URL in media_url
+        user_id: user.id, // Automatically set to logged-in user's ID
         status: "pending",
       });
 
       if (error) {
-        // Handle rate limit errors gracefully
-        if (
-          error.message.includes("rate limit") ||
-          error.message.includes("limit reached")
-        ) {
+        if (error.message.includes("rate limit") || error.message.includes("limit reached")) {
           toast.error(error.message);
           return;
         }
         throw error;
       }
 
-      toast.success(
-        "Record submitted successfully! It will be reviewed by our team.",
-      );
+      // Step C: Show success message and clear form
+      toast.success("Record submitted for approval!");
+      form.reset();
+      setSelectedFile(null);
       navigate("/");
     } catch (error) {
       console.error("Record creation error:", error);
-      toast.error("Failed to create record");
+      toast.error("Failed to submit record. Please try again.");
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      form.setValue("proofFile", file);
+      form.clearErrors("proofFile");
     }
   };
 
@@ -175,21 +208,32 @@ export default function CreateRecord() {
               Submit a New Record
             </CardTitle>
             <CardDescription>
-              Share your achievement with the world
+              Share your achievement with the world. All submissions are reviewed before approval.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6"
-              >
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
-                  name="title"
+                  name="studentName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Record Title</FormLabel>
+                      <FormLabel>Student Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Your full name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="recordTitle"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Record Title *</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="e.g., Fastest 100m sprint in university history"
@@ -209,11 +253,8 @@ export default function CreateRecord() {
                   name="categoryId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                      <FormLabel>Category *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a category" />
@@ -237,7 +278,7 @@ export default function CreateRecord() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>Description *</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Describe your record achievement in detail..."
@@ -246,8 +287,7 @@ export default function CreateRecord() {
                         />
                       </FormControl>
                       <FormDescription>
-                        Provide detailed information about how you achieved this
-                        record (50-5000 characters)
+                        Provide detailed information about how you achieved this record (50-5000 characters)
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -256,24 +296,13 @@ export default function CreateRecord() {
 
                 <FormField
                   control={form.control}
-                  name="mediaFiles"
-                  render={({ field: { value, onChange, ...field } }) => (
+                  name="schoolName"
+                  render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Media (Photos/Videos)</FormLabel>
+                      <FormLabel>School Name *</FormLabel>
                       <FormControl>
-                        <Input
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
-                          multiple
-                          onChange={(e) =>
-                            onChange(Array.from(e.target.files || []))
-                          }
-                          {...field}
-                        />
+                        <Input placeholder="Your school or university name" {...field} />
                       </FormControl>
-                      <FormDescription>
-                        Upload photos or videos of your record (max 50MB each)
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -281,24 +310,31 @@ export default function CreateRecord() {
 
                 <FormField
                   control={form.control}
-                  name="evidenceFiles"
+                  name="proofFile"
                   render={({ field: { value, onChange, ...field } }) => (
                     <FormItem>
-                      <FormLabel>Evidence Documents</FormLabel>
+                      <FormLabel>Proof Image *</FormLabel>
                       <FormControl>
-                        <Input
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp,application/pdf"
-                          multiple
-                          onChange={(e) =>
-                            onChange(Array.from(e.target.files || []))
-                          }
-                          {...field}
-                        />
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-4">
+                            <Input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/gif"
+                              onChange={handleFileChange}
+                              className="flex-1"
+                              {...field}
+                            />
+                          </div>
+                          {selectedFile && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Upload className="h-4 w-4" />
+                              <span>{selectedFile.name}</span>
+                            </div>
+                          )}
+                        </div>
                       </FormControl>
                       <FormDescription>
-                        Upload supporting evidence like certificates, official
-                        documents (max 10MB each)
+                        Upload an image as proof of your achievement (JPEG, PNG, WebP, or GIF)
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -307,12 +343,17 @@ export default function CreateRecord() {
 
                 <Button
                   type="submit"
-                  disabled={form.formState.isSubmitting}
+                  disabled={form.formState.isSubmitting || uploading}
                   className="w-full"
                 >
-                  {form.formState.isSubmitting
-                    ? "Submitting..."
-                    : "Submit Record"}
+                  {form.formState.isSubmitting || uploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {uploading ? "Uploading..." : "Submitting..."}
+                    </>
+                  ) : (
+                    "Submit Record"
+                  )}
                 </Button>
               </form>
             </Form>
