@@ -31,12 +31,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (event === "SIGNED_IN" && session?.user) {
+        // Load profile after sign in (including Google OAuth)
+        setTimeout(() => {
+          loadProfile(session.user.id).catch(console.error);
+        }, 0);
+      }
+      
       if (event === "SIGNED_OUT") {
         setUser(null);
         setSession(null);
+        setProfile(null);
       }
     });
 
