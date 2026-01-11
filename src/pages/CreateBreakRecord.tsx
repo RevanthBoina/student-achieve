@@ -37,7 +37,7 @@ export default function CreateBreakRecord() {
     fraudScore: number;
     contentQualityScore: number;
     flags: string[];
-    recommendedAction: string;
+    recommendedAction: "approve" | "review" | "reject";
     suggestions?: string[];
     details?: unknown;
   };
@@ -131,16 +131,16 @@ export default function CreateBreakRecord() {
       if (recordError) throw recordError;
 
       // Step 3: Store AI moderation results
-      const { error: aiError } = await supabase
+      const { error: aiError } = await (supabase
         .from("ai_moderation_results" as any)
         .insert({
           record_id: record.id,
           fraud_score: analysis.fraudScore,
           content_quality_score: analysis.contentQualityScore,
           flags: analysis.flags,
-          recommended_action: analysis.recommendedAction,
+          recommended_action: analysis.recommendedAction as "approve" | "review" | "reject",
           analysis_details: analysis.details,
-        });
+        }) as any);
 
       if (aiError) console.error("Failed to store AI results:", aiError);
 
