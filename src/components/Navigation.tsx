@@ -25,7 +25,7 @@ export function Navigation() {
             className="flex items-center gap-2 text-xl font-bold font-poppins text-primary hover:text-primary-light transition-colors"
           >
             <Trophy className="h-7 w-7 text-gold" />
-            <span className="hidden sm:inline">Student World Records</span>
+            <span className="hidden sm:inline">Student Book of World Records</span>
           </NavLink>
 
           <div className="hidden md:flex items-center gap-1">
