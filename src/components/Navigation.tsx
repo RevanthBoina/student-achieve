@@ -19,13 +19,19 @@ export function Navigation() {
   };
 
   const handleGoogleLogin = async () => {
-    const { error } = await signInWithGoogle();
-    if (error) {
-      toast({
-        title: "Login failed",
-        description: error.message,
-        variant: "destructive"
-      });
+    console.log('Login clicked');
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) {
+        console.error('Google login error:', error);
+        toast({
+          title: "Login failed",
+          description: error.message,
+          variant: "destructive"
+        });
+      }
+    } catch (err) {
+      console.error('Google login exception:', err);
     }
   };
 
@@ -89,6 +95,7 @@ export function Navigation() {
             </>
           ) : (
             <Button
+              type="button"
               onClick={handleGoogleLogin}
               className="gap-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 shadow-sm"
               size="sm"
