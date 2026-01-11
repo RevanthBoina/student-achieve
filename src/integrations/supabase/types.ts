@@ -309,7 +309,9 @@ export type Database = {
           id: string
           media_url: string | null
           reactions_count: number | null
+          school_name: string | null
           status: Database["public"]["Enums"]["record_status"] | null
+          student_name: string | null
           title: string
           updated_at: string | null
           user_id: string
@@ -332,7 +334,9 @@ export type Database = {
           id?: string
           media_url?: string | null
           reactions_count?: number | null
+          school_name?: string | null
           status?: Database["public"]["Enums"]["record_status"] | null
+          student_name?: string | null
           title: string
           updated_at?: string | null
           user_id: string
@@ -355,7 +359,9 @@ export type Database = {
           id?: string
           media_url?: string | null
           reactions_count?: number | null
+          school_name?: string | null
           status?: Database["public"]["Enums"]["record_status"] | null
+          student_name?: string | null
           title?: string
           updated_at?: string | null
           user_id?: string
